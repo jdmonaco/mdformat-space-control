@@ -128,7 +128,7 @@ uv run pytest --cov=mdformat_space_control
 
 MIT - see LICENSE file for details.
 
-[ci-badge]: https://github.com/jdmonaco/mdformat-space-control/workflows/CI/badge.svg?branch=main
-[ci-link]: https://github.com/jdmonaco/mdformat-space-control/actions?query=workflow%3ACI+branch%3Amain+event%3Apush
+[ci-badge]: https://github.com/jdmonaco/mdformat-space-control/actions/workflows/tests.yml/badge.svg?branch=main
+[ci-link]: https://github.com/jdmonaco/mdformat-space-control/actions/workflows/tests.yml
 [pypi-badge]: https://img.shields.io/pypi/v/mdformat-space-control.svg
 [pypi-link]: https://pypi.org/project/mdformat-space-control
