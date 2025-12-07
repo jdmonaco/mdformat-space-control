@@ -1,6 +1,6 @@
 # Test file
 
-In the raw Markdown, the following should consist of three tight lights ('-', '*', numbered) and a loose list ('-') due to a multi-paragraph item:
+In the raw Markdown, the following should consist of three tight lists ('-', '*', numbered) and a loose list ('-') due to a multi-paragraph item:
 
 - List 1: item 1
 
