@@ -1,18 +1,29 @@
+"""mdformat-space-control plugin implementation.
+
+Provides custom renderers that combine:
+- EditorConfig-based indentation settings
+- Tight list formatting with multi-paragraph awareness
+"""
+
 from typing import Mapping
 
 from markdown_it import MarkdownIt
 from mdformat.renderer import RenderContext, RenderTreeNode
 from mdformat.renderer.typing import Render
 from mdformat.renderer._context import (
-    make_render_children, 
+    make_render_children,
     get_list_marker_type,
-    is_tight_list_item,
-    is_tight_list
 )
+
+from mdformat_space_control.config import get_indent_config
 
 
 def update_mdit(mdit: MarkdownIt) -> None:
-    """Update the parser, e.g. by adding a plugin: `mdit.use(myplugin)`"""
+    """Update the markdown-it parser.
+
+    This hook can be used to add markdown-it plugins or modify parser behavior.
+    Currently a no-op for this plugin.
+    """
     pass
 
 
@@ -35,8 +46,31 @@ def list_has_loose_items(list_node: RenderTreeNode) -> bool:
     return False
 
 
+def _get_indent(default_width: int) -> tuple[str, int]:
+    """Get the indentation string and width based on editorconfig.
+
+    Args:
+        default_width: The default indent width (from marker length).
+
+    Returns:
+        Tuple of (indent_string, indent_width) where:
+        - indent_string: The string to use for indentation
+        - indent_width: The width in columns (for context.indented)
+    """
+    config = get_indent_config()
+    if config is None:
+        # No editorconfig - use default (passthrough behavior)
+        return (" " * default_width, default_width)
+
+    style, size = config
+    if style == "tab":
+        return ("\t", size)  # Tab char, but track column width
+    else:
+        return (" " * size, size)
+
+
 def _render_list_item(node: RenderTreeNode, context: RenderContext) -> str:
-    """Return one list item as string with appropriate formatting.
+    """Render a list item with appropriate tight/loose formatting.
 
     For single-paragraph items in tight lists, use tight formatting.
     For multi-paragraph items, preserve loose formatting.
@@ -54,7 +88,7 @@ def _render_list_item(node: RenderTreeNode, context: RenderContext) -> str:
         else:
             # Use tight formatting
             block_separator = "\n"
-    
+
     text = make_render_children(block_separator)(node, context)
 
     if not text.strip():
@@ -63,16 +97,19 @@ def _render_list_item(node: RenderTreeNode, context: RenderContext) -> str:
 
 
 def _render_bullet_list(node: RenderTreeNode, context: RenderContext) -> str:
-    """Render bullet list with appropriate formatting."""
+    """Render bullet list with configurable indentation and tight formatting."""
     marker_type = get_list_marker_type(node)
     first_line_indent = " "
-    indent = " " * len(marker_type + first_line_indent)
-    
-    # Check if this should be a loose list
+    default_indent_width = len(marker_type + first_line_indent)
+
+    # Get configurable indent from editorconfig
+    indent_str, indent_width = _get_indent(default_indent_width)
+
+    # Determine tight/loose based on multi-paragraph items
     is_loose = list_has_loose_items(node)
     block_separator = "\n\n" if is_loose else "\n"
 
-    with context.indented(len(indent)):
+    with context.indented(indent_width):
         text = ""
         for child_idx, child in enumerate(node.children):
             list_item = child.render(context)
@@ -85,7 +122,7 @@ def _render_bullet_list(node: RenderTreeNode, context: RenderContext) -> str:
                 else marker_type
             )
             for line in line_iterator:
-                formatted_lines.append(f"{indent}{line}" if line else "")
+                formatted_lines.append(f"{indent_str}{line}" if line else "")
             text += "\n".join(formatted_lines)
             if child_idx < len(node.children) - 1:
                 text += block_separator
@@ -93,27 +130,31 @@ def _render_bullet_list(node: RenderTreeNode, context: RenderContext) -> str:
 
 
 def _render_ordered_list(node: RenderTreeNode, context: RenderContext) -> str:
-    """Render ordered list with appropriate formatting."""
+    """Render ordered list with configurable indentation and tight formatting."""
     first_line_indent = " "
     list_len = len(node.children)
     starting_number = node.attrs.get("start")
     if starting_number is None:
         starting_number = 1
     assert isinstance(starting_number, int)
-    
-    # Check if this should be a loose list
+
+    # Determine tight/loose based on multi-paragraph items
     is_loose = list_has_loose_items(node)
     block_separator = "\n\n" if is_loose else "\n"
 
-    longest_marker_len = len(str(starting_number + list_len - 1) + "." + first_line_indent)
-    indent = " " * longest_marker_len
-    
-    with context.indented(longest_marker_len):
+    # Calculate default indent width based on longest marker
+    longest_marker_len = len(
+        str(starting_number + list_len - 1) + "." + first_line_indent
+    )
+
+    # Get configurable indent from editorconfig
+    indent_str, indent_width = _get_indent(longest_marker_len)
+
+    with context.indented(indent_width):
         text = ""
         for child_idx, child in enumerate(node.children):
             list_marker = f"{starting_number + child_idx}."
-            marker_len = len(list_marker + first_line_indent)
-            
+
             list_item = child.render(context)
             formatted_lines = []
             line_iterator = iter(list_item.split("\n"))
@@ -123,10 +164,10 @@ def _render_ordered_list(node: RenderTreeNode, context: RenderContext) -> str:
                 if first_line
                 else list_marker
             )
-            
+
             for line in line_iterator:
-                formatted_lines.append(f"{indent}{line}" if line else "")
-            
+                formatted_lines.append(f"{indent_str}{line}" if line else "")
+
             text += "\n".join(formatted_lines)
             if child_idx < len(node.children) - 1:
                 text += block_separator

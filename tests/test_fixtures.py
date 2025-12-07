@@ -12,6 +12,6 @@ fixtures = read_fixture_file(FIXTURE_PATH)
     "line,title,text,expected", fixtures, ids=[f[1] for f in fixtures]
 )
 def test_fixtures(line, title, text, expected):
-    output = mdformat.text(text, extensions={"tight_lists"})
+    output = mdformat.text(text, extensions={"space_control"})
     print(output)
     assert output.rstrip() == expected.rstrip(), output

@@ -122,11 +122,11 @@ complex nested structure
    * Maintains structure
 .
 1. First ordered item
-   - Nested unordered
-   - Another nested
+  - Nested unordered
+  - Another nested
 2. Second ordered item
-   - Different marker
-   - Maintains structure
+  - Different marker
+  - Maintains structure
 .
 
 list with blank lines in items

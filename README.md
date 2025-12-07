@@ -1,41 +1,68 @@
-# mdformat-tight-lists
+# mdformat-space-control
 
 [![Build Status][ci-badge]][ci-link]
 [![PyPI version][pypi-badge]][pypi-link]
 
-An [mdformat](https://github.com/executablebooks/mdformat) plugin that formats Markdown lists to be tight (no empty lines between list items) following mdformat-style rules.
+An [mdformat](https://github.com/executablebooks/mdformat) plugin that provides unified control over Markdown list formatting:
+
+- **EditorConfig support**: Configure list indentation via `.editorconfig` files
+- **Tight list formatting**: Automatically removes unnecessary blank lines between list items
 
 ## Installation
 
 ```bash
-pip install mdformat-tight-lists
+pip install mdformat-space-control
 ```
 
 Or with [pipx](https://pipx.pypa.io/) for command-line usage:
 
 ```bash
 pipx install mdformat
-pipx inject mdformat mdformat-tight-lists
+pipx inject mdformat mdformat-space-control
 ```
 
 ## Usage
 
-After installation, mdformat will automatically use this plugin when formatting Markdown files:
+After installation, mdformat will automatically use this plugin:
 
 ```bash
 mdformat your-file.md
 ```
 
-### Features
+### EditorConfig Support
 
-- **Smart List Formatting**: Automatically creates tight lists by removing unnecessary empty lines
-- **List Type Detection**: Different top-level markers (`-`, `*`, `+`) are treated as separate lists
-- **Nested List Handling**: Properly handles transitions between ordered and unordered lists
-- **Multi-Paragraph Support**: Preserves loose formatting when list items contain multiple paragraphs
+Create an `.editorconfig` file in your project:
 
-### Examples
+```ini
+# .editorconfig
+root = true
 
-**Input:**
+[*.md]
+indent_style = space
+indent_size = 4
+```
+
+Nested lists will use the configured indentation:
+
+**Before:**
+```markdown
+- Item 1
+  - Nested item
+- Item 2
+```
+
+**After (with 4-space indent):**
+```markdown
+- Item 1
+    - Nested item
+- Item 2
+```
+
+### Tight List Formatting
+
+Lists with single-paragraph items are automatically formatted as tight lists:
+
+**Before:**
 ```markdown
 - Item 1
 
@@ -44,14 +71,15 @@ mdformat your-file.md
 - Item 3
 ```
 
-**Output:**
+**After:**
 ```markdown
 - Item 1
 - Item 2
 - Item 3
 ```
 
-**Multi-paragraph items (loose list preserved):**
+Multi-paragraph items preserve loose formatting:
+
 ```markdown
 - First item with multiple paragraphs
 
@@ -60,45 +88,47 @@ mdformat your-file.md
 - Second item
 ```
 
-## Development
+### EditorConfig Properties
 
-### Setup
+| Property | Status | Notes |
+|----------|--------|-------|
+| `indent_style` | Supported | `space` or `tab` for list indentation |
+| `indent_size` | Supported | Number of spaces per indent level |
+| `tab_width` | Supported | Used when `indent_size = tab` |
 
-```bash
-# Clone the repository
-git clone https://github.com/jdmonaco/mdformat-tight-lists.git
-cd mdformat-tight-lists
+### Python API
 
-# Install development environment with uv
-uv sync
+When using the Python API, you can set the file context for EditorConfig lookup:
+
+```python
+import mdformat
+from mdformat_space_control import set_current_file
+
+set_current_file("/path/to/your/file.md")
+try:
+    result = mdformat.text(markdown_text, extensions={"space_control"})
+finally:
+    set_current_file(None)
 ```
 
-### Running Tests
+## Development
 
 ```bash
-# Run all tests
+# Install dependencies
+uv sync
+
+# Run tests
 uv run pytest
 
 # Run with coverage
-uv run pytest --cov=mdformat_tight_lists
-
-# Run tests verbosely
-uv run pytest -v
+uv run pytest --cov=mdformat_space_control
 ```
-
-### Adding Tests
-
-To add new test cases, edit `tests/fixtures.md` following the existing format:
-- Test title
-- Input markdown (between dots)
-- Expected output (between dots)
 
 ## License
 
 MIT - see LICENSE file for details.
 
-[ci-badge]: https://github.com/jdmonaco/mdformat-tight-lists/workflows/CI/badge.svg?branch=main
-[ci-link]: https://github.com/jdmonaco/mdformat-tight-lists/actions?query=workflow%3ACI+branch%3Amain+event%3Apush
-[pypi-badge]: https://img.shields.io/pypi/v/mdformat-tight-lists.svg
-[pypi-link]: https://pypi.org/project/mdformat-tight-lists
-
+[ci-badge]: https://github.com/jdmonaco/mdformat-space-control/workflows/CI/badge.svg?branch=main
+[ci-link]: https://github.com/jdmonaco/mdformat-space-control/actions?query=workflow%3ACI+branch%3Amain+event%3Apush
+[pypi-badge]: https://img.shields.io/pypi/v/mdformat-space-control.svg
+[pypi-link]: https://pypi.org/project/mdformat-space-control
