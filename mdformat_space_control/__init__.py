@@ -1,6 +1,6 @@
 """An mdformat plugin for EditorConfig-based indentation and tight list formatting."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from .config import (
     get_current_file,
