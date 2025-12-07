@@ -42,6 +42,11 @@ def get_indent_config() -> tuple[str, int] | None:
     current working directory for editorconfig lookup. This enables CLI
     usage when running mdformat from a project directory.
 
+    If CWD-based lookup finds no settings and no explicit file was set,
+    falls back to ~/.editorconfig as a final attempt. This handles cases
+    where mdformat is called from applications (like Obsidian plugins)
+    whose working directory is outside the user's HOME tree.
+
     Returns:
         Tuple of (indent_style, indent_size) where:
         - indent_style: "space" or "tab"
@@ -49,6 +54,7 @@ def get_indent_config() -> tuple[str, int] | None:
         Returns None if no indent config found.
     """
     filepath = _current_file.get()
+    explicit_file_set = filepath is not None
 
     # Fallback to cwd for CLI usage - use a synthetic .md file path
     # to ensure markdown-specific editorconfig sections are matched
@@ -58,12 +64,25 @@ def get_indent_config() -> tuple[str, int] | None:
     try:
         props = editorconfig.get_properties(str(filepath))
     except editorconfig.EditorConfigError:
-        return None
+        props = {}
 
     indent_style = props.get("indent_style")
     indent_size = props.get("indent_size")
 
-    # If neither property is set, return None (passthrough)
+    # Fallback to ~/.editorconfig if no indent config found and no explicit file set
+    # This handles CLI usage from apps whose CWD is outside the user's HOME tree
+    if not indent_style and not indent_size and not explicit_file_set:
+        home_editorconfig = Path.home() / ".editorconfig"
+        if home_editorconfig.exists():
+            try:
+                # Use a synthetic .md file in HOME for the lookup
+                home_props = editorconfig.get_properties(str(Path.home() / "_.md"))
+                indent_style = home_props.get("indent_style")
+                indent_size = home_props.get("indent_size")
+            except editorconfig.EditorConfigError:
+                pass
+
+    # If still neither property is set, return None (passthrough)
     if not indent_style and not indent_size:
         return None
 

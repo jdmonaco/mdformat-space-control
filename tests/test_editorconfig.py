@@ -206,9 +206,15 @@ indent_size = 4
         assert result == expected
 
     def test_fallback_without_editorconfig(self, temp_project, monkeypatch):
-        """Without .editorconfig in cwd, use mdformat defaults."""
-        # No .editorconfig file created
+        """Without .editorconfig in cwd or HOME, use mdformat defaults."""
+        # No .editorconfig file created in temp_project
         monkeypatch.chdir(temp_project)
+
+        # Also isolate from real HOME ~/.editorconfig
+        fake_home = temp_project / "fake_home"
+        fake_home.mkdir()
+        monkeypatch.setattr(Path, "home", lambda: fake_home)
+
         set_current_file(None)
 
         input_text = """\
@@ -257,6 +263,124 @@ indent_size = 4
     - Nested item
 """
         result = format_with_context(input_text, md_file)
+        assert result == expected
+
+
+class TestHomeFallback:
+    """Tests for HOME ~/.editorconfig fallback."""
+
+    def test_home_fallback_when_cwd_outside_home(self, temp_project, monkeypatch):
+        """Should use ~/.editorconfig when CWD has no .editorconfig and is outside HOME."""
+        # Create a "fake home" directory with .editorconfig
+        fake_home = temp_project / "fake_home"
+        fake_home.mkdir()
+        create_editorconfig(
+            fake_home,
+            """
+root = true
+
+[*.md]
+indent_style = space
+indent_size = 4
+""",
+        )
+
+        # Create a separate "app" directory with NO .editorconfig
+        app_dir = temp_project / "app"
+        app_dir.mkdir()
+
+        # Monkeypatch Path.home() to return fake_home
+        monkeypatch.setattr(Path, "home", lambda: fake_home)
+
+        # Change CWD to app_dir (which has no .editorconfig)
+        monkeypatch.chdir(app_dir)
+
+        # Clear any file context
+        set_current_file(None)
+
+        input_text = """\
+- Item 1
+  - Nested item
+- Item 2
+"""
+        # Should pick up 4-space indent from fake_home/.editorconfig
+        expected = """\
+- Item 1
+    - Nested item
+- Item 2
+"""
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+    def test_no_fallback_when_explicit_file_set(self, temp_project, monkeypatch):
+        """Should NOT use HOME fallback when explicit file context is set."""
+        # Create a "fake home" with 4-space .editorconfig
+        fake_home = temp_project / "fake_home"
+        fake_home.mkdir()
+        create_editorconfig(
+            fake_home,
+            """
+root = true
+
+[*.md]
+indent_style = space
+indent_size = 4
+""",
+        )
+
+        # Create a project directory with NO .editorconfig
+        project_dir = temp_project / "project"
+        project_dir.mkdir()
+
+        # Monkeypatch Path.home() to return fake_home
+        monkeypatch.setattr(Path, "home", lambda: fake_home)
+
+        input_text = """\
+- Item 1
+  - Nested item
+- Item 2
+"""
+        # With explicit file context set (even if in dir without .editorconfig),
+        # HOME fallback should NOT be used - should use mdformat defaults (2 space)
+        expected = """\
+- Item 1
+  - Nested item
+- Item 2
+"""
+        result = format_with_context(input_text, project_dir / "test.md")
+        assert result == expected
+
+    def test_no_fallback_when_home_editorconfig_missing(self, temp_project, monkeypatch):
+        """Should use defaults when HOME has no .editorconfig."""
+        # Create a "fake home" with NO .editorconfig
+        fake_home = temp_project / "fake_home"
+        fake_home.mkdir()
+
+        # Create a separate "app" directory with NO .editorconfig
+        app_dir = temp_project / "app"
+        app_dir.mkdir()
+
+        # Monkeypatch Path.home() to return fake_home
+        monkeypatch.setattr(Path, "home", lambda: fake_home)
+
+        # Change CWD to app_dir
+        monkeypatch.chdir(app_dir)
+
+        # Clear any file context
+        set_current_file(None)
+
+        input_text = """\
+- Item 1
+    - Nested item
+- Item 2
+"""
+        # Should use mdformat defaults (2-space)
+        expected = """\
+- Item 1
+  - Nested item
+- Item 2
+"""
+        result = mdformat.text(input_text, extensions={"space_control"})
         assert result == expected
 
 
