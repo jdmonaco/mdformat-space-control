@@ -3,10 +3,11 @@
 [![Build Status][ci-badge]][ci-link]
 [![PyPI version][pypi-badge]][pypi-link]
 
-An [mdformat](https://github.com/executablebooks/mdformat) plugin that provides unified control over Markdown list formatting:
+An [mdformat](https://github.com/executablebooks/mdformat) plugin that provides unified control over Markdown spacing:
 
 - **EditorConfig support**: Configure list indentation via `.editorconfig` files
 - **Tight list formatting**: Automatically removes unnecessary blank lines between list items
+- **Frontmatter spacing**: Normalizes spacing after YAML frontmatter (works with [mdformat-frontmatter](https://github.com/butler54/mdformat-frontmatter))
 
 ## Installation
 
@@ -86,6 +87,37 @@ Multi-paragraph items preserve loose formatting:
   Second paragraph of first item
 
 - Second item
+```
+
+### Frontmatter Spacing
+
+When used with [mdformat-frontmatter](https://github.com/butler54/mdformat-frontmatter), this plugin normalizes the spacing after YAML frontmatter:
+
+- **Heading after frontmatter**: No blank line (tight)
+- **Other content after frontmatter**: Exactly one blank line
+
+**Before:**
+```markdown
+---
+title: My Document
+---
+
+
+# Introduction
+```
+
+**After:**
+```markdown
+---
+title: My Document
+---
+# Introduction
+```
+
+Install both plugins for this feature:
+
+```bash
+pip install mdformat-space-control mdformat-frontmatter
 ```
 
 ### EditorConfig Properties

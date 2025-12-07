@@ -4,9 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-mdformat-space-control is an mdformat plugin that provides unified control over Markdown list formatting:
+mdformat-space-control is an mdformat plugin that provides unified control over Markdown spacing:
 - **EditorConfig support**: Configure list indentation via `.editorconfig` files
 - **Tight list formatting**: Automatically removes unnecessary blank lines between list items
+- **Frontmatter spacing**: Normalizes spacing after YAML frontmatter (works with mdformat-frontmatter)
 
 This plugin merges functionality from mdformat-editorconfig and mdformat-tight-lists into a single plugin, solving the issue where mdformat only applies one set of list renderers when multiple plugins are installed.
 
@@ -32,16 +33,18 @@ mdformat_space_control/
 **Key components:**
 
 - **`config.py`**: Uses `contextvars` for thread-safe file path tracking. Falls back to `Path.cwd() / "_.md"` for CLI usage when no explicit file context is set.
-- **`plugin.py`**: Provides three renderers:
+- **`plugin.py`**: Provides renderers and postprocessors:
   - `_render_list_item`: Per-item tight/loose formatting based on paragraph count
   - `_render_bullet_list`: Configurable indent + content-based tight/loose
   - `_render_ordered_list`: Configurable indent + content-based tight/loose
+  - `_postprocess_root`: Normalizes frontmatter spacing (works with mdformat-frontmatter)
 
 ## Plugin Extension Points
 
 mdformat plugins expose:
 1. **`RENDERERS`**: Dict mapping node types to render functions
-2. **`update_mdit(mdit)`**: Hook to modify the markdown-it parser (no-op here)
+2. **`POSTPROCESSORS`**: Dict mapping node types to postprocess functions
+3. **`update_mdit(mdit)`**: Hook to modify the markdown-it parser (no-op here)
 
 Entry point in `pyproject.toml`:
 ```toml
@@ -54,6 +57,7 @@ space_control = "mdformat_space_control"
 - **`tests/fixtures.md`**: Markdown-it fixture format for tight-list tests
 - **`tests/test_fixtures.py`**: Parametrized fixture tests
 - **`tests/test_editorconfig.py`**: EditorConfig-specific tests using temp directories
+- **`tests/test_frontmatter.py`**: Frontmatter spacing tests (requires mdformat-frontmatter)
 
 ## Key Dependencies
 

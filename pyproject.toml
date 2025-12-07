@@ -20,7 +20,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Text Processing :: Markup :: Markdown",
 ]
-keywords = ["mdformat", "markdown", "formatter", "editorconfig", "indentation", "lists"]
+keywords = ["mdformat", "markdown", "formatter", "editorconfig", "indentation", "lists", "frontmatter"]
 requires-python = ">=3.10"
 dependencies = [
     "mdformat>=0.7.0",
@@ -32,6 +32,7 @@ dynamic = ["version", "description"]
 test = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "mdformat-frontmatter>=2.0.0",
 ]
 
 [project.urls]

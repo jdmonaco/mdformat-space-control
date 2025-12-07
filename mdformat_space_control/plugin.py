@@ -3,13 +3,15 @@
 Provides custom renderers that combine:
 - EditorConfig-based indentation settings
 - Tight list formatting with multi-paragraph awareness
+- Frontmatter spacing normalization
 """
 
+import re
 from typing import Mapping
 
 from markdown_it import MarkdownIt
 from mdformat.renderer import RenderContext, RenderTreeNode
-from mdformat.renderer.typing import Render
+from mdformat.renderer.typing import Postprocess, Render
 from mdformat.renderer._context import (
     make_render_children,
     get_list_marker_type,
@@ -181,4 +183,30 @@ RENDERERS: Mapping[str, Render] = {
     "list_item": _render_list_item,
     "bullet_list": _render_bullet_list,
     "ordered_list": _render_ordered_list,
+}
+
+
+def _postprocess_root(text: str, node: RenderTreeNode, context: RenderContext) -> str:
+    """Normalize spacing after YAML frontmatter.
+
+    Applies two spacing rules:
+    - Heading after frontmatter: no blank line (tight)
+    - Other content after frontmatter: exactly one blank line
+
+    This postprocessor works with mdformat-frontmatter without conflicts
+    since it operates on the rendered output, not the AST.
+    """
+    # Remove blank line(s) before heading: ---\n\n+# → ---\n#
+    text = re.sub(r"^(---\n)\n+(#)", r"\1\2", text, count=1, flags=re.MULTILINE)
+
+    # Normalize multiple blank lines to exactly one for non-headings
+    text = re.sub(r"^(---\n)\n{2,}(\S)", r"\1\n\2", text, count=1, flags=re.MULTILINE)
+
+    return text
+
+
+# A mapping from syntax tree node type to a postprocessing function.
+# Postprocessors run after rendering and can modify the output text.
+POSTPROCESSORS: Mapping[str, Postprocess] = {
+    "root": _postprocess_root,
 }

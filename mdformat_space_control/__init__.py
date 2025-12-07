@@ -1,4 +1,4 @@
-"""An mdformat plugin for EditorConfig-based indentation and tight list formatting."""
+"""An mdformat plugin for space control: EditorConfig indentation, tight lists, and frontmatter spacing."""
 
 __version__ = "0.1.1"
 
@@ -7,9 +7,10 @@ from .config import (
     get_indent_config,
     set_current_file,
 )
-from .plugin import RENDERERS, update_mdit
+from .plugin import POSTPROCESSORS, RENDERERS, update_mdit
 
 __all__ = [
+    "POSTPROCESSORS",
     "RENDERERS",
     "update_mdit",
     "set_current_file",
