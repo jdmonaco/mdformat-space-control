@@ -74,7 +74,7 @@ space_control = "mdformat_space_control"
 Tested to work alongside:
 - `mdformat-frontmatter` - YAML frontmatter parsing
 - `mdformat-wikilink` - `[[wikilink]]` handling
-- `mdformat-simple-breaks` - Line break handling
+- `mdformat-simple-breaks` - Normalizes thematic breaks to `---`
 
 ## Release Process
 

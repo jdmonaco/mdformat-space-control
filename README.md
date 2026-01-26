@@ -148,7 +148,7 @@ This plugin is tested to work alongside:
 
 - [mdformat-frontmatter](https://github.com/butler54/mdformat-frontmatter) - YAML frontmatter parsing
 - [mdformat-wikilink](https://github.com/tmr232/mdformat-wikilink) - `[[wikilink]]` handling
-- [mdformat-simple-breaks](https://github.com/csala/mdformat-simple-breaks) - Line break handling
+- [mdformat-simple-breaks](https://github.com/csala/mdformat-simple-breaks) - Normalizes thematic breaks to `---`
 
 For formatting files in an **Obsidian vault**, installing `mdformat-frontmatter` and `mdformat-wikilink` alongside this plugin is recommended:
 
