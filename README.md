@@ -8,6 +8,8 @@ An [mdformat](https://github.com/executablebooks/mdformat) plugin that provides 
 - **EditorConfig support**: Configure list indentation via `.editorconfig` files
 - **Tight list formatting**: Automatically removes unnecessary blank lines between list items
 - **Frontmatter spacing**: Normalizes spacing after YAML frontmatter (works with [mdformat-frontmatter](https://github.com/butler54/mdformat-frontmatter))
+- **Trailing whitespace removal**: Strips trailing whitespace outside code blocks
+- **Escaped link repair**: Fixes malformed multi-line links from web-clipped content
 
 ## Installation
 
@@ -91,10 +93,7 @@ Multi-paragraph items preserve loose formatting:
 
 ### Frontmatter Spacing
 
-When used with [mdformat-frontmatter](https://github.com/butler54/mdformat-frontmatter), this plugin normalizes the spacing after YAML frontmatter:
-
-- **Heading after frontmatter**: No blank line (tight)
-- **Other content after frontmatter**: Exactly one blank line
+When used with [mdformat-frontmatter](https://github.com/butler54/mdformat-frontmatter), this plugin removes blank lines between the frontmatter closing delimiter and the first content block:
 
 **Before:**
 ```markdown
@@ -143,6 +142,20 @@ finally:
     set_current_file(None)
 ```
 
+## Compatible Plugins
+
+This plugin is tested to work alongside:
+
+- [mdformat-frontmatter](https://github.com/butler54/mdformat-frontmatter) - YAML frontmatter parsing
+- [mdformat-wikilink](https://github.com/tmr232/mdformat-wikilink) - `[[wikilink]]` handling
+- [mdformat-simple-breaks](https://github.com/csala/mdformat-simple-breaks) - Line break handling
+
+For formatting files in an **Obsidian vault**, installing `mdformat-frontmatter` and `mdformat-wikilink` alongside this plugin is recommended:
+
+```bash
+pip install mdformat-space-control mdformat-frontmatter mdformat-wikilink
+```
+
 ## Development
 
 ```bash
@@ -150,10 +163,10 @@ finally:
 uv sync
 
 # Run tests
-uv run pytest
+uv run python -m pytest
 
 # Run with coverage
-uv run pytest --cov=mdformat_space_control
+uv run python -m pytest --cov=mdformat_space_control
 ```
 
 ## License
