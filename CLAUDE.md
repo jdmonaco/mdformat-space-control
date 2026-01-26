@@ -69,6 +69,13 @@ space_control = "mdformat_space_control"
 - **mdformat** (>=0.7.0): The Markdown formatter being extended
 - **editorconfig** (>=0.12.0): EditorConfig file parsing
 
+## Compatible Plugins
+
+Tested to work alongside:
+- `mdformat-frontmatter` - YAML frontmatter parsing
+- `mdformat-wikilink` - `[[wikilink]]` handling
+- `mdformat-simple-breaks` - Line break handling
+
 ## Release Process
 
 1. Update version in `__init__.py`
