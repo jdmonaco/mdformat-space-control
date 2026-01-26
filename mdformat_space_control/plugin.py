@@ -187,6 +187,42 @@ RENDERERS: Mapping[str, Render] = {
 }
 
 
+def _repair_escaped_links(text: str) -> str:
+    """Repair escaped markdown links that span multiple lines.
+
+    mdformat escapes brackets when links are malformed (contain newlines).
+    This function detects these patterns and reconstructs valid links by:
+    - Removing newlines immediately after \\[
+    - Removing newlines immediately before \\](
+    - Unescaping remaining bracket escapes to form valid links
+
+    Pattern: \\[content\\](url) spanning multiple lines
+    Result: [content](url) with internal newlines preserved
+
+    Handles standard markdown link syntax including image embeds inside links,
+    which is common in web-clipped content.
+    """
+    # Step 1: Remove newlines immediately after escaped opening bracket
+    # \[ followed by one or more newlines → [
+    text = re.sub(r"\\\[\n+", "[", text)
+
+    # Step 2: Remove newlines immediately before escaped closing bracket with URL
+    # one or more newlines followed by \]( → ](
+    text = re.sub(r"\n+\\\]\(", "](", text)
+
+    # Step 3: Unescape \]( that follows non-backslash character
+    # This handles cases where only the opening had newlines
+    text = re.sub(r"(?<=[^\\\n])\\\]\(", "](", text)
+
+    # Step 4: Unescape \[ at start of a repaired link
+    # Pattern: \[ followed by any content ending with ](
+    # This handles cases where only the closing had newlines
+    # Use non-greedy match to find the first ]( after \[
+    text = re.sub(r"\\\[(.+?)\]\(", r"[\1](", text)
+
+    return text
+
+
 def _normalize_frontmatter_spacing(text: str) -> str:
     """Normalize spacing after YAML frontmatter.
 
@@ -248,12 +284,16 @@ def _postprocess_root(text: str, node: RenderTreeNode, context: RenderContext) -
 
     Applies the following transformations in order:
     1. Frontmatter spacing normalization
-    2. Trailing whitespace removal
+    2. Escaped link repair
+    3. Trailing whitespace removal
     """
     # 1. Frontmatter spacing
     text = _normalize_frontmatter_spacing(text)
 
-    # 2. Trailing whitespace removal
+    # 2. Repair escaped links (before trailing whitespace removal)
+    text = _repair_escaped_links(text)
+
+    # 3. Trailing whitespace removal
     text = _strip_trailing_whitespace(text)
 
     return text

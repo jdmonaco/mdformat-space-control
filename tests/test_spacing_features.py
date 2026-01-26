@@ -205,6 +205,70 @@ class TestNormalLinks:
         assert result == expected
 
 
+class TestEscapedLinkRepair:
+    """Tests for repairing escaped links that span multiple lines."""
+
+    def test_newlines_after_opening_bracket(self):
+        """Remove newlines immediately after escaped opening bracket."""
+        input_text = "[\n\ntext](url)\n"
+        expected = "[text](url)\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+    def test_newlines_before_closing_bracket(self):
+        """Remove newlines immediately before escaped closing bracket."""
+        input_text = "[text\n\n](url)\n"
+        expected = "[text](url)\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+    def test_newlines_both_ends(self):
+        """Remove newlines at both ends of link text."""
+        input_text = "[\n\ntext\n\n](url)\n"
+        expected = "[text](url)\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+    def test_internal_newlines_preserved(self):
+        """Internal newlines between content blocks should be preserved."""
+        input_text = "[\n\nFirst paragraph.\n\nSecond paragraph.\n\n](url)\n"
+        expected = "[First paragraph.\n\nSecond paragraph.](url)\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+    def test_image_embed_in_link(self):
+        """Image embed inside link text should be repaired.
+
+        This is a common pattern in web-clipped content where an image
+        is wrapped in a link.
+        """
+        input_text = "[![alt text](image.png)\n\nCaption\n\n](url)\n"
+        expected = "[![alt text](image.png)\n\nCaption](url)\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+    def test_normal_link_unchanged(self):
+        """Valid links should not be affected."""
+        input_text = "[normal link](url)\n"
+        expected = "[normal link](url)\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+    def test_multiple_links(self):
+        """Multiple escaped links in same document."""
+        input_text = "[\n\nfirst](url1) and [\n\nsecond](url2)\n"
+        expected = "[first](url1) and [second](url2)\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+    def test_link_with_prefix_text(self):
+        """Escaped link with text before it."""
+        input_text = "Check this [\n\nlink](url) here.\n"
+        expected = "Check this [link](url) here.\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+
 class TestIntegration:
     """Integration tests for multiple features working together."""
 
@@ -269,6 +333,48 @@ code
 ```
 
 > Quote
+"""
+        result = mdformat.text(input_text, extensions={"space_control", "frontmatter"})
+        assert result == expected
+
+    def test_all_features_with_escaped_link(self):
+        """All features including escaped link repair working together.
+
+        Simulates web-clipped content with:
+        - Frontmatter
+        - Malformed link (newlines in bracket structure)
+        - Lists
+        - Trailing whitespace
+        """
+        input_text = """\
+---
+title: Web Clip
+---
+
+# Article Title
+
+See [
+
+this resource
+
+](https://example.com) for details.
+
+**Key points:**
+- First point
+- Second point
+"""
+        expected = """\
+---
+title: Web Clip
+---
+# Article Title
+
+See [this resource](https://example.com) for details.
+
+**Key points:**
+
+- First point
+- Second point
 """
         result = mdformat.text(input_text, extensions={"space_control", "frontmatter"})
         assert result == expected
