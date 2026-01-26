@@ -8,6 +8,7 @@ An [mdformat](https://github.com/executablebooks/mdformat) plugin that provides 
 - **EditorConfig support**: Configure list indentation via `.editorconfig` files
 - **Tight list formatting**: Automatically removes unnecessary blank lines between list items
 - **Frontmatter spacing**: Normalizes spacing after YAML frontmatter (works with [mdformat-frontmatter](https://github.com/butler54/mdformat-frontmatter))
+- **Consecutive blank line normalization**: Limits runs of 3+ empty lines to a maximum of 2
 - **Trailing whitespace removal**: Strips trailing whitespace outside code blocks
 - **Escaped link repair**: Fixes malformed multi-line links from web-clipped content
 

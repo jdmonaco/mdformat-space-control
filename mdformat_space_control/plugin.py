@@ -279,13 +279,47 @@ def _strip_trailing_whitespace(text: str) -> str:
     return "\n".join(result)
 
 
+def _normalize_consecutive_blank_lines(text: str) -> str:
+    """Limit consecutive blank lines to a maximum of 2.
+
+    Collapses runs of 3+ empty lines down to 2 empty lines (3 newlines).
+    Preserves content inside fenced code blocks.
+    """
+    lines = text.split("\n")
+    result = []
+    in_code_block = False
+    consecutive_empty = 0
+
+    for line in lines:
+        # Track code block state
+        stripped = line.strip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_code_block = not in_code_block
+
+        if in_code_block:
+            # Preserve everything inside code blocks
+            result.append(line)
+            consecutive_empty = 0
+        elif line == "":
+            consecutive_empty += 1
+            if consecutive_empty <= 2:
+                result.append(line)
+            # else: skip this empty line (collapse)
+        else:
+            consecutive_empty = 0
+            result.append(line)
+
+    return "\n".join(result)
+
+
 def _postprocess_root(text: str, node: RenderTreeNode, context: RenderContext) -> str:
     """Combined postprocessor for all space control features.
 
     Applies the following transformations in order:
     1. Frontmatter spacing normalization
     2. Escaped link repair
-    3. Trailing whitespace removal
+    3. Consecutive blank line normalization
+    4. Trailing whitespace removal
     """
     # 1. Frontmatter spacing
     text = _normalize_frontmatter_spacing(text)
@@ -293,7 +327,10 @@ def _postprocess_root(text: str, node: RenderTreeNode, context: RenderContext) -
     # 2. Repair escaped links (before trailing whitespace removal)
     text = _repair_escaped_links(text)
 
-    # 3. Trailing whitespace removal
+    # 3. Limit consecutive blank lines to 2
+    text = _normalize_consecutive_blank_lines(text)
+
+    # 4. Trailing whitespace removal
     text = _strip_trailing_whitespace(text)
 
     return text

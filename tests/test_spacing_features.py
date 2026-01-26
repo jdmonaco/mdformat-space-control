@@ -269,6 +269,113 @@ class TestEscapedLinkRepair:
         assert result == expected
 
 
+class TestConsecutiveBlankLines:
+    """Tests for limiting consecutive blank lines.
+
+    Note: mdformat's AST-based rendering normalizes blank lines between
+    content blocks to a single blank line. The postprocessor can only work
+    on the rendered output, which has already been normalized.
+
+    These tests verify the postprocessor correctly handles:
+    1. Already-normalized content (pass-through)
+    2. Code blocks (preserve internal blank lines)
+    3. Direct function testing for edge cases
+    """
+
+    def test_mdformat_normalizes_multiple_blank_lines(self):
+        """mdformat normalizes multiple blank lines to one during rendering."""
+        # This verifies the expected behavior - mdformat already handles this
+        input_text = "First paragraph.\n\n\n\nSecond paragraph.\n"
+        expected = "First paragraph.\n\nSecond paragraph.\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+    def test_single_empty_line_unchanged(self):
+        """Single empty line should remain unchanged."""
+        input_text = "First.\n\nSecond.\n"
+        expected = "First.\n\nSecond.\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+    def test_code_block_preserved(self):
+        """Empty lines inside code blocks should be preserved."""
+        input_text = "Text.\n\n```\n\n\n\n\ncode\n\n\n\n\n```\n\nMore text.\n"
+        expected = "Text.\n\n```\n\n\n\n\ncode\n\n\n\n\n```\n\nMore text.\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+
+class TestConsecutiveBlankLinesFunction:
+    """Direct tests for _normalize_consecutive_blank_lines function.
+
+    These tests verify the function works correctly in isolation,
+    independent of mdformat's rendering normalization.
+    """
+
+    def test_three_empty_lines_reduced_to_two(self):
+        """Three empty lines should be reduced to two."""
+        from mdformat_space_control.plugin import _normalize_consecutive_blank_lines
+
+        input_text = "First paragraph.\n\n\n\nSecond paragraph.\n"
+        expected = "First paragraph.\n\n\nSecond paragraph.\n"
+        result = _normalize_consecutive_blank_lines(input_text)
+        assert result == expected
+
+    def test_many_empty_lines_reduced_to_two(self):
+        """Many empty lines should be reduced to two."""
+        from mdformat_space_control.plugin import _normalize_consecutive_blank_lines
+
+        input_text = "First.\n\n\n\n\n\n\nSecond.\n"
+        expected = "First.\n\n\nSecond.\n"
+        result = _normalize_consecutive_blank_lines(input_text)
+        assert result == expected
+
+    def test_two_empty_lines_unchanged(self):
+        """Two empty lines should remain unchanged."""
+        from mdformat_space_control.plugin import _normalize_consecutive_blank_lines
+
+        input_text = "First.\n\n\nSecond.\n"
+        expected = "First.\n\n\nSecond.\n"
+        result = _normalize_consecutive_blank_lines(input_text)
+        assert result == expected
+
+    def test_single_empty_line_unchanged(self):
+        """Single empty line should remain unchanged."""
+        from mdformat_space_control.plugin import _normalize_consecutive_blank_lines
+
+        input_text = "First.\n\nSecond.\n"
+        expected = "First.\n\nSecond.\n"
+        result = _normalize_consecutive_blank_lines(input_text)
+        assert result == expected
+
+    def test_code_block_preserved(self):
+        """Empty lines inside code blocks should be preserved."""
+        from mdformat_space_control.plugin import _normalize_consecutive_blank_lines
+
+        input_text = "Text.\n\n```\n\n\n\n\ncode\n\n\n\n\n```\n\nMore text.\n"
+        expected = "Text.\n\n```\n\n\n\n\ncode\n\n\n\n\n```\n\nMore text.\n"
+        result = _normalize_consecutive_blank_lines(input_text)
+        assert result == expected
+
+    def test_multiple_sections(self):
+        """Multiple sections with excess blank lines."""
+        from mdformat_space_control.plugin import _normalize_consecutive_blank_lines
+
+        input_text = "# One\n\n\n\n\nPara.\n\n\n\n\n# Two\n"
+        expected = "# One\n\n\nPara.\n\n\n# Two\n"
+        result = _normalize_consecutive_blank_lines(input_text)
+        assert result == expected
+
+    def test_tilde_code_block_preserved(self):
+        """Empty lines inside tilde-fenced code blocks should be preserved."""
+        from mdformat_space_control.plugin import _normalize_consecutive_blank_lines
+
+        input_text = "Text.\n\n~~~\n\n\n\n\ncode\n\n\n\n\n~~~\n\nMore text.\n"
+        expected = "Text.\n\n~~~\n\n\n\n\ncode\n\n\n\n\n~~~\n\nMore text.\n"
+        result = _normalize_consecutive_blank_lines(input_text)
+        assert result == expected
+
+
 class TestIntegration:
     """Integration tests for multiple features working together."""
 

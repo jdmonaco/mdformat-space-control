@@ -8,6 +8,7 @@ mdformat-space-control is an mdformat plugin that provides unified control over 
 - **EditorConfig support**: Configure list indentation via `.editorconfig` files
 - **Tight list formatting**: Automatically removes unnecessary blank lines between list items
 - **Frontmatter spacing**: Normalizes spacing after YAML frontmatter (works with mdformat-frontmatter)
+- **Consecutive blank line normalization**: Limits runs of 3+ empty lines to a maximum of 2
 - **Trailing whitespace removal**: Strips trailing whitespace outside code blocks
 - **Escaped link repair**: Fixes malformed multi-line links from web-clipped content
 
@@ -39,7 +40,7 @@ mdformat_space_control/
   - `_render_list_item`: Per-item tight/loose formatting based on paragraph count
   - `_render_bullet_list`: Configurable indent + content-based tight/loose
   - `_render_ordered_list`: Configurable indent + content-based tight/loose
-  - `_postprocess_root`: Combined postprocessor applying frontmatter spacing, escaped link repair, and trailing whitespace removal
+  - `_postprocess_root`: Combined postprocessor applying frontmatter spacing, escaped link repair, consecutive blank line normalization, and trailing whitespace removal
 
 ## Plugin Extension Points
 
@@ -60,7 +61,7 @@ space_control = "mdformat_space_control"
 - **`tests/test_fixtures.py`**: Parametrized fixture tests
 - **`tests/test_editorconfig.py`**: EditorConfig-specific tests using temp directories
 - **`tests/test_frontmatter.py`**: Frontmatter spacing tests (requires mdformat-frontmatter)
-- **`tests/test_spacing_features.py`**: Trailing whitespace, hard breaks, escaped link repair tests
+- **`tests/test_spacing_features.py`**: Trailing whitespace, hard breaks, escaped link repair, consecutive blank line tests
 - **`tests/test_integration.py`**: Full-stack integration tests combining multiple features
 - **`tests/test_plugin_interactions.py`**: Tests for compatibility with other mdformat plugins
 
