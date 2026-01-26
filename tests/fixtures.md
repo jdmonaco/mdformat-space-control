@@ -173,3 +173,82 @@ mixed single and multi paragraph items
 
 - Simple item 2
 .
+
+basic checkbox list
+.
+- [ ] Task 1
+
+- [x] Task 2
+
+- [ ] Task 3
+.
+- [ ] Task 1
+- [x] Task 2
+- [ ] Task 3
+.
+
+nested checkbox list
+.
+- [ ] Parent task 1
+  - [x] Completed subtask
+  - [ ] Pending subtask
+- [x] Parent task 2
+.
+- [ ] Parent task 1
+  - [x] Completed subtask
+  - [ ] Pending subtask
+- [x] Parent task 2
+.
+
+mixed checkbox and regular items
+.
+- [ ] Task item
+
+- Regular item
+
+- [x] Completed task
+.
+- [ ] Task item
+- Regular item
+- [x] Completed task
+.
+
+checkbox with continuation
+.
+- [ ] Task with
+  continuation text
+- [x] Another task
+.
+- [ ] Task with
+  continuation text
+- [x] Another task
+.
+
+multi-paragraph checkbox item
+.
+- [ ] Task with paragraphs
+
+  Second paragraph here.
+
+- [x] Simple task
+.
+- [ ] Task with paragraphs
+
+  Second paragraph here.
+
+- [x] Simple task
+.
+
+normal link unchanged
+.
+[normal link](https://example.com)
+.
+[normal link](https://example.com)
+.
+
+link in paragraph
+.
+Check [this link](https://example.com) for info.
+.
+Check [this link](https://example.com) for info.
+.

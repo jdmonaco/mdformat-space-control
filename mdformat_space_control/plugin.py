@@ -4,6 +4,7 @@ Provides custom renderers that combine:
 - EditorConfig-based indentation settings
 - Tight list formatting with multi-paragraph awareness
 - Frontmatter spacing normalization
+- Trailing whitespace removal (outside code blocks)
 """
 
 import re
@@ -186,21 +187,74 @@ RENDERERS: Mapping[str, Render] = {
 }
 
 
-def _postprocess_root(text: str, node: RenderTreeNode, context: RenderContext) -> str:
+def _normalize_frontmatter_spacing(text: str) -> str:
     """Normalize spacing after YAML frontmatter.
 
-    Applies two spacing rules:
-    - Heading after frontmatter: no blank line (tight)
-    - Other content after frontmatter: exactly one blank line
+    Removes all blank lines between frontmatter closing delimiter and the
+    first content block, producing tight spacing universally.
 
-    This postprocessor works with mdformat-frontmatter without conflicts
-    since it operates on the rendered output, not the AST.
+    IMPORTANT: Only matches actual frontmatter (document starts with ---)
+    not thematic breaks appearing mid-document.
     """
-    # Remove blank line(s) before heading: ---\n\n+# → ---\n#
-    text = re.sub(r"^(---\n)\n+(#)", r"\1\2", text, count=1, flags=re.MULTILINE)
+    # Only process if document starts with frontmatter opening delimiter
+    if not text.startswith("---\n"):
+        return text
 
-    # Normalize multiple blank lines to exactly one for non-headings
-    text = re.sub(r"^(---\n)\n{2,}(\S)", r"\1\n\2", text, count=1, flags=re.MULTILINE)
+    # Find the closing delimiter (second --- on its own line)
+    # Pattern: opening --- at start, content, closing --- on its own line
+    frontmatter_match = re.match(r"^---\n.*?\n(---\n)", text, flags=re.DOTALL)
+    if not frontmatter_match:
+        return text
+
+    # Get position after closing delimiter
+    closing_end = frontmatter_match.end(1)
+    before_content = text[:closing_end]
+    after_content = text[closing_end:]
+
+    # Remove all blank lines after frontmatter (tight spacing for any content)
+    after_content = re.sub(r"^\n+", "", after_content)
+
+    return before_content + after_content
+
+
+def _strip_trailing_whitespace(text: str) -> str:
+    """Strip trailing whitespace, preserving code blocks.
+
+    Fenced code blocks (``` or ~~~) preserve trailing whitespace
+    since it may be semantically meaningful in code.
+    """
+    lines = text.split("\n")
+    result = []
+    in_code_block = False
+
+    for line in lines:
+        # Track fenced code block state
+        stripped = line.lstrip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_code_block = not in_code_block
+            result.append(line.rstrip())  # Strip fence line itself
+        elif in_code_block:
+            # Preserve trailing whitespace inside code blocks
+            result.append(line)
+        else:
+            # Strip trailing whitespace everywhere else
+            result.append(line.rstrip())
+
+    return "\n".join(result)
+
+
+def _postprocess_root(text: str, node: RenderTreeNode, context: RenderContext) -> str:
+    """Combined postprocessor for all space control features.
+
+    Applies the following transformations in order:
+    1. Frontmatter spacing normalization
+    2. Trailing whitespace removal
+    """
+    # 1. Frontmatter spacing
+    text = _normalize_frontmatter_spacing(text)
+
+    # 2. Trailing whitespace removal
+    text = _strip_trailing_whitespace(text)
 
     return text
 

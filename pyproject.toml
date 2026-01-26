@@ -33,6 +33,8 @@ test = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "mdformat-frontmatter>=2.0.0",
+    "mdformat-simple-breaks>=0.1.0",
+    "mdformat-wikilink>=0.3.0",
 ]
 
 [project.urls]

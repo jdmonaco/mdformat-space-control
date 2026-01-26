@@ -484,3 +484,57 @@ indent_size = 4
 """
         result = format_with_context(input_text, md_file)
         assert result == expected
+
+
+class TestEditorConfigDebug:
+    """Tests documenting EditorConfig resolution behavior."""
+
+    def test_cwd_differs_from_file_location(self, temp_project, monkeypatch):
+        """When CWD differs from file location, explicit file context wins."""
+        create_editorconfig(
+            temp_project,
+            """
+root = true
+
+[*.md]
+indent_style = space
+indent_size = 4
+""",
+        )
+
+        other_dir = temp_project / "other"
+        other_dir.mkdir()
+        monkeypatch.chdir(other_dir)
+
+        md_file = temp_project / "doc.md"
+        result = format_with_context("- A\n  - B\n", md_file)
+        assert "    - B" in result  # 4-space indent
+
+    def test_obsidian_scenario_no_file_context(self, temp_project, monkeypatch):
+        """Document behavior when no file context is set (Obsidian-like)."""
+        vault = temp_project / "vault"
+        vault.mkdir()
+        create_editorconfig(
+            vault,
+            """
+root = true
+
+[*.md]
+indent_style = space
+indent_size = 4
+""",
+        )
+
+        app_dir = temp_project / "app"
+        app_dir.mkdir()
+        monkeypatch.chdir(app_dir)
+
+        fake_home = temp_project / "fake_home"
+        fake_home.mkdir()
+        monkeypatch.setattr(Path, "home", lambda: fake_home)
+
+        set_current_file(None)
+
+        # Without file context, vault's .editorconfig is NOT found
+        result = mdformat.text("- A\n  - B\n", extensions={"space_control"})
+        assert "  - B" in result  # 2-space default
