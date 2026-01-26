@@ -8,17 +8,19 @@ mdformat-space-control is an mdformat plugin that provides unified control over 
 - **EditorConfig support**: Configure list indentation via `.editorconfig` files
 - **Tight list formatting**: Automatically removes unnecessary blank lines between list items
 - **Frontmatter spacing**: Normalizes spacing after YAML frontmatter (works with mdformat-frontmatter)
+- **Trailing whitespace removal**: Strips trailing whitespace outside code blocks
+- **Escaped link repair**: Fixes malformed multi-line links from web-clipped content
 
 This plugin merges functionality from mdformat-editorconfig and mdformat-tight-lists into a single plugin, solving the issue where mdformat only applies one set of list renderers when multiple plugins are installed.
 
 ## Build and Test Commands
 
 ```bash
-uv sync --extra test     # Install dependencies including test deps
-uv run pytest            # Run all tests
-uv run pytest -v         # Run tests verbosely
-uv run pytest --cov=mdformat_space_control  # Run with coverage
-uv run pytest tests/test_editorconfig.py    # Run specific test file
+uv sync --extra test                        # Install dependencies including test deps
+uv run python -m pytest                     # Run all tests
+uv run python -m pytest -v                  # Run tests verbosely
+uv run python -m pytest --cov=mdformat_space_control  # Run with coverage
+uv run python -m pytest tests/test_editorconfig.py    # Run specific test file
 ```
 
 ## Architecture
@@ -37,7 +39,7 @@ mdformat_space_control/
   - `_render_list_item`: Per-item tight/loose formatting based on paragraph count
   - `_render_bullet_list`: Configurable indent + content-based tight/loose
   - `_render_ordered_list`: Configurable indent + content-based tight/loose
-  - `_postprocess_root`: Normalizes frontmatter spacing (works with mdformat-frontmatter)
+  - `_postprocess_root`: Combined postprocessor applying frontmatter spacing, escaped link repair, and trailing whitespace removal
 
 ## Plugin Extension Points
 
@@ -58,6 +60,9 @@ space_control = "mdformat_space_control"
 - **`tests/test_fixtures.py`**: Parametrized fixture tests
 - **`tests/test_editorconfig.py`**: EditorConfig-specific tests using temp directories
 - **`tests/test_frontmatter.py`**: Frontmatter spacing tests (requires mdformat-frontmatter)
+- **`tests/test_spacing_features.py`**: Trailing whitespace, hard breaks, escaped link repair tests
+- **`tests/test_integration.py`**: Full-stack integration tests combining multiple features
+- **`tests/test_plugin_interactions.py`**: Tests for compatibility with other mdformat plugins
 
 ## Key Dependencies
 
