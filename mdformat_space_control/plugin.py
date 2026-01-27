@@ -5,12 +5,14 @@ Provides custom renderers that combine:
 - Tight list formatting with multi-paragraph awareness
 - Frontmatter spacing normalization
 - Trailing whitespace removal (outside code blocks)
+- Wikilink preservation ([[link]] and ![[embed]] syntax)
 """
 
 import re
 from typing import Mapping
 
 from markdown_it import MarkdownIt
+from markdown_it.rules_inline import StateInline
 from mdformat.renderer import RenderContext, RenderTreeNode
 from mdformat.renderer.typing import Postprocess, Render
 from mdformat.renderer._context import (
@@ -21,13 +23,51 @@ from mdformat.renderer._context import (
 from mdformat_space_control.config import get_indent_config
 
 
+# Wikilink pattern for Obsidian-style links:
+#   [[page]], [[page|alias]], [[page#heading]], [[page#^blockid]],
+#   [[#heading]], ![[embed]], ![[image.jpg]], etc.
+# Pattern breakdown:
+#   !?                        - optional embed prefix
+#   \[\[                      - opening [[
+#   [^\[\]|]*                 - target (no brackets or pipe)
+#   (?:#[^\[\]|]*)*           - zero or more #heading/#^block sections
+#   (?:\|[^\[\]]+)?           - optional |alias
+#   \]\]                      - closing ]]
+WIKILINK_PATTERN = re.compile(r"!?\[\[([^\[\]|]*(?:#[^\[\]|]*)*)(?:\|[^\[\]]+)?\]\]")
+
+
+def _wikilink_rule(state: StateInline, silent: bool) -> bool:
+    """Parse wikilinks at the current position.
+
+    Matches Obsidian-style wikilinks including:
+    - [[page]] and [[page|alias]]
+    - [[page#heading]] and [[page#^blockid]]
+    - [[#heading]] (same-page links)
+    - ![[embed]] and ![[image.jpg]]
+
+    By running before the link parser, wikilinks inside markdown link text
+    are correctly preserved rather than being extracted and duplicated.
+    """
+    match = WIKILINK_PATTERN.match(state.src, state.pos)
+    if not match:
+        return False
+
+    if not silent:
+        token = state.push("wikilink", "", 0)
+        token.content = match.group(0)
+
+    state.pos = match.end()
+    return True
+
+
 def update_mdit(mdit: MarkdownIt) -> None:
     """Update the markdown-it parser.
 
-    This hook can be used to add markdown-it plugins or modify parser behavior.
-    Currently a no-op for this plugin.
+    Adds wikilink parsing support for Obsidian-style [[link]] and ![[embed]]
+    syntax. The rule runs before the link parser to correctly handle wikilinks
+    that appear inside markdown link text.
     """
-    pass
+    mdit.inline.ruler.before("link", "wikilink", _wikilink_rule)
 
 
 def has_multiple_paragraphs(list_item_node: RenderTreeNode) -> bool:
@@ -177,6 +217,11 @@ def _render_ordered_list(node: RenderTreeNode, context: RenderContext) -> str:
     return text
 
 
+def _render_wikilink(node: RenderTreeNode, context: RenderContext) -> str:
+    """Render a wikilink token, preserving it unchanged."""
+    return node.content
+
+
 # A mapping from syntax tree node type to a function that renders it.
 # This can be used to overwrite renderer functions of existing syntax
 # or add support for new syntax.
@@ -184,6 +229,7 @@ RENDERERS: Mapping[str, Render] = {
     "list_item": _render_list_item,
     "bullet_list": _render_bullet_list,
     "ordered_list": _render_ordered_list,
+    "wikilink": _render_wikilink,
 }
 
 

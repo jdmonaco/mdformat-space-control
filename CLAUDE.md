@@ -11,6 +11,7 @@ mdformat-space-control is an mdformat plugin that provides unified control over 
 - **Consecutive blank line normalization**: Limits runs of 3+ empty lines to a maximum of 2
 - **Trailing whitespace removal**: Strips trailing whitespace outside code blocks
 - **Escaped link repair**: Fixes malformed multi-line links from web-clipped content
+- **Wikilink preservation**: Handles Obsidian-style `[[links]]`, `[[links|aliases]]`, `[[page#heading]]`, `[[page#^blockid]]`, and `![[embeds]]`
 
 This plugin merges functionality from mdformat-editorconfig and mdformat-tight-lists into a single plugin, solving the issue where mdformat only applies one set of list renderers when multiple plugins are installed.
 
@@ -36,7 +37,9 @@ mdformat_space_control/
 **Key components:**
 
 - **`config.py`**: Uses `contextvars` for thread-safe file path tracking. Falls back to `Path.cwd() / "_.md"` for CLI usage when no explicit file context is set.
-- **`plugin.py`**: Provides renderers and postprocessors:
+- **`plugin.py`**: Provides renderers, postprocessors, and parser extensions:
+  - `_wikilink_rule`: Inline parser for Obsidian-style wikilinks
+  - `_render_wikilink`: Preserves wikilinks unchanged
   - `_render_list_item`: Per-item tight/loose formatting based on paragraph count
   - `_render_bullet_list`: Configurable indent + content-based tight/loose
   - `_render_ordered_list`: Configurable indent + content-based tight/loose
@@ -47,7 +50,7 @@ mdformat_space_control/
 mdformat plugins expose:
 1. **`RENDERERS`**: Dict mapping node types to render functions
 2. **`POSTPROCESSORS`**: Dict mapping node types to postprocess functions
-3. **`update_mdit(mdit)`**: Hook to modify the markdown-it parser (no-op here)
+3. **`update_mdit(mdit)`**: Hook to modify the markdown-it parser (used for wikilink parsing)
 
 Entry point in `pyproject.toml`:
 ```toml
@@ -74,8 +77,9 @@ space_control = "mdformat_space_control"
 
 Tested to work alongside:
 - `mdformat-frontmatter` - YAML frontmatter parsing
-- `mdformat-wikilink` - `[[wikilink]]` handling
 - `mdformat-simple-breaks` - Normalizes thematic breaks to `---`
+
+Note: Wikilink support is built-in; `mdformat-wikilink` is not needed.
 
 ## Release Process
 

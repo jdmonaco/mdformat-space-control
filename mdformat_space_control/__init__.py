@@ -1,6 +1,6 @@
-"""An mdformat plugin for space control: EditorConfig indentation, tight lists, and frontmatter spacing."""
+"""An mdformat plugin for space control: EditorConfig indentation, tight lists, frontmatter spacing, and wikilinks."""
 
-__version__ = "0.1.3"
+__version__ = "0.2.0"
 
 from .config import (
     get_current_file,

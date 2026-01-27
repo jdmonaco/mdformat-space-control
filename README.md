@@ -11,6 +11,7 @@ An [mdformat](https://github.com/executablebooks/mdformat) plugin that provides 
 - **Consecutive blank line normalization**: Limits runs of 3+ empty lines to a maximum of 2
 - **Trailing whitespace removal**: Strips trailing whitespace outside code blocks
 - **Escaped link repair**: Fixes malformed multi-line links from web-clipped content
+- **Wikilink preservation**: Handles Obsidian-style `[[links]]`, `[[links|aliases]]`, `[[page#heading]]`, `[[page#^blockid]]`, and `![[embeds]]`
 
 ## Installation
 
@@ -143,19 +144,37 @@ finally:
     set_current_file(None)
 ```
 
+### Wikilink Preservation
+
+Obsidian-style wikilinks are preserved during formatting:
+
+```markdown
+Link to [[another note]] or [[note|with alias]].
+Embed an image: ![[photo.jpg]]
+Link to heading: [[note#section]]
+Block reference: [[note#^blockid]]
+```
+
+Wikilinks inside markdown link text are correctly handled without duplication:
+
+```markdown
+[![[image.jpg]]](http://example.com)
+```
+
 ## Compatible Plugins
 
 This plugin is tested to work alongside:
 
 - [mdformat-frontmatter](https://github.com/butler54/mdformat-frontmatter) - YAML frontmatter parsing
-- [mdformat-wikilink](https://github.com/tmr232/mdformat-wikilink) - `[[wikilink]]` handling
 - [mdformat-simple-breaks](https://github.com/csala/mdformat-simple-breaks) - Normalizes thematic breaks to `---`
 
-For formatting files in an **Obsidian vault**, installing `mdformat-frontmatter` and `mdformat-wikilink` alongside this plugin is recommended:
+For formatting files in an **Obsidian vault**, installing `mdformat-frontmatter` alongside this plugin is recommended:
 
 ```bash
-pip install mdformat-space-control mdformat-frontmatter mdformat-wikilink
+pip install mdformat-space-control mdformat-frontmatter
 ```
+
+Note: Wikilink support is built-in; `mdformat-wikilink` is not needed.
 
 ## Development
 

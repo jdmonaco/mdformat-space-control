@@ -10,13 +10,6 @@ try:
 except ImportError:
     HAS_SIMPLE_BREAKS = False
 
-try:
-    import mdformat_wikilink
-
-    HAS_WIKILINK = True
-except ImportError:
-    HAS_WIKILINK = False
-
 
 class TestSpaceControlAlone:
     """Tests for space_control without other plugins."""
@@ -41,23 +34,90 @@ class TestWithFrontmatter:
         assert "---\n# Heading" in result
 
 
-@pytest.mark.skipif(not HAS_WIKILINK, reason="mdformat-wikilink not installed")
-class TestWithWikilink:
-    """Tests requiring mdformat-wikilink plugin.
+class TestBuiltinWikilinks:
+    """Tests for built-in wikilink support.
 
-    Note: mdformat-wikilink is the plugin that preserves [[wikilinks]].
-    mdformat-obsidian handles callouts, footnotes, math, and task lists,
-    but does NOT handle wikilinks.
+    Wikilink support is built into space_control (not a separate plugin).
+    Supports Obsidian-style [[links]], [[links|aliases]], [[page#heading]],
+    [[page#^blockid]], and ![[embeds]].
     """
 
-    def test_wikilinks_preserved(self):
-        """Wikilinks should be preserved with mdformat-wikilink."""
+    def test_basic_wikilink_preserved(self):
+        """Basic wikilinks should be preserved."""
+        input_text = "Link to [[Note]].\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "[[Note]]" in result
+
+    def test_wikilink_with_alias_preserved(self):
+        """Wikilinks with aliases should be preserved."""
+        input_text = "Link to [[Note|my alias]].\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "[[Note|my alias]]" in result
+
+    def test_wikilink_with_heading_preserved(self):
+        """Wikilinks with heading references should be preserved."""
+        input_text = "Link to [[Note#Section]].\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "[[Note#Section]]" in result
+
+    def test_wikilink_with_block_ref_preserved(self):
+        """Wikilinks with block references should be preserved."""
+        input_text = "Link to [[Note#^blockid]].\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "[[Note#^blockid]]" in result
+
+    def test_embed_preserved(self):
+        """Embed syntax ![[...]] should be preserved."""
+        input_text = "Embed: ![[image.jpg]]\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "![[image.jpg]]" in result
+
+    def test_embed_with_alias_preserved(self):
+        """Embeds with aliases should be preserved."""
+        input_text = "Embed: ![[image.jpg|caption]]\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "![[image.jpg|caption]]" in result
+
+    def test_wikilinks_in_list(self):
+        """Wikilinks in lists should be preserved."""
         input_text = "- [[Note]]\n- [[Other|alias]]\n"
-        result = mdformat.text(
-            input_text, extensions={"space_control", "wikilink"}
-        )
+        result = mdformat.text(input_text, extensions={"space_control"})
         assert "[[Note]]" in result
         assert "[[Other|alias]]" in result
+
+    def test_wikilink_in_markdown_link_text(self):
+        """Wikilinks inside markdown link text should not be duplicated."""
+        input_text = "[![[image.jpg]]](http://example.com)\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == "[![[image.jpg]]](http://example.com)\n"
+        # Critical: no duplication
+        assert result.count("[[image.jpg]]") == 1
+
+    def test_wikilink_formatting_is_idempotent(self):
+        """Multiple format passes should produce identical output."""
+        input_text = "[![[nested.jpg]]](http://example.com)\n"
+        result1 = mdformat.text(input_text, extensions={"space_control"})
+        result2 = mdformat.text(result1, extensions={"space_control"})
+        result3 = mdformat.text(result2, extensions={"space_control"})
+        assert result1 == result2 == result3
+
+    def test_same_page_heading_link(self):
+        """Same-page heading links should be preserved."""
+        input_text = "Jump to [[#Section]].\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "[[#Section]]" in result
+
+    def test_same_page_block_ref(self):
+        """Same-page block references should be preserved."""
+        input_text = "See [[#^blockid]].\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "[[#^blockid]]" in result
+
+    def test_complex_wikilink(self):
+        """Complex wikilink with heading, block ref, and alias."""
+        input_text = "See [[Note#Section#^blockid|alias]].\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "[[Note#Section#^blockid|alias]]" in result
 
 
 @pytest.mark.skipif(not HAS_SIMPLE_BREAKS, reason="mdformat-simple-breaks not installed")
