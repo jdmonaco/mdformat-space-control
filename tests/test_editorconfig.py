@@ -81,7 +81,7 @@ indent_size = 4
 - Item 2
 """
         expected = """\
-- Item 1
+- Item 1\\
     with continuation
 - Item 2
 """

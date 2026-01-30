@@ -104,11 +104,11 @@ indent_size = 4
    continuation lines
 """
         expected = """\
-1. First item with
+1. First item with\\
 \tcontinuation line
 2. Second item
-3. Third item with
-\tmultiple
+3. Third item with\\
+\tmultiple\\
 \tcontinuation lines
 """
         with tempfile.TemporaryDirectory() as tmpdir:

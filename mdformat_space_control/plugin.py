@@ -222,6 +222,16 @@ def _render_wikilink(node: RenderTreeNode, context: RenderContext) -> str:
     return node.content
 
 
+def _render_softbreak(node: RenderTreeNode, context: RenderContext) -> str:
+    """Render soft breaks with terminal backslash.
+
+    Converts soft breaks (plain newlines within paragraphs) to hard breaks
+    (backslash + newline) to preserve visible line-break rendering and avoid
+    relying on trailing whitespace.
+    """
+    return "\\" + "\n"
+
+
 # A mapping from syntax tree node type to a function that renders it.
 # This can be used to overwrite renderer functions of existing syntax
 # or add support for new syntax.
@@ -230,6 +240,7 @@ RENDERERS: Mapping[str, Render] = {
     "bullet_list": _render_bullet_list,
     "ordered_list": _render_ordered_list,
     "wikilink": _render_wikilink,
+    "softbreak": _render_softbreak,
 }
 
 
