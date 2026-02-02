@@ -26,8 +26,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install flit
-        flit install --extras=test
+        pip install ".[test]"
 
     - name: Run tests
       run: |
@@ -46,11 +45,15 @@ jobs:
       with:
         python-version: "3.12"
     
-    - name: Install Flit
-      run: pip install flit
-    
-    - name: Build and publish
-      run: flit publish
+    - name: Build package
+      run: |
+        pip install build
+        python -m build
+
+    - name: Publish to PyPI
+      run: |
+        pip install twine
+        twine upload dist/*
       env:
-        FLIT_USERNAME: __token__
-        FLIT_PASSWORD: ${{ secrets.PYPI_KEY }}
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_KEY }}
