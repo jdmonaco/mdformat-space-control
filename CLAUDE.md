@@ -32,7 +32,7 @@ uv run python -m pytest tests/test_editorconfig.py    # Run specific test file
 mdformat_space_control/
 ├── __init__.py    # Public API exports, version
 ├── config.py      # EditorConfig lookup, file context tracking
-└── plugin.py      # List renderers (RENDERERS dict)
+└── plugin.py      # Renderers, postprocessors, parser extensions
 ```
 
 **Key components:**
