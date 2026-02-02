@@ -112,12 +112,55 @@ def _get_indent(default_width: int) -> tuple[str, int]:
         return (" " * size, size)
 
 
+def _is_task_list_item(node: RenderTreeNode) -> bool:
+    """Check if a list item is a GFM task list item.
+
+    When mdformat-gfm is installed, the tasklists markdown-it plugin annotates
+    task list items with a 'task-list-item' CSS class.
+    """
+    classes = node.attrs.get("class", "")
+    return isinstance(classes, str) and "task-list-item" in classes
+
+
+def _extract_task_checkbox(node: RenderTreeNode) -> str | None:
+    """Extract and remove the task checkbox HTML from a task list item node.
+
+    The tasklists markdown-it plugin injects an HTML <input> element as the
+    first child of the inline token. This function extracts the checked state
+    and removes the HTML node so it doesn't appear in the rendered output.
+
+    Returns:
+        "x" for checked, " " for unchecked, or None if not a task list item.
+    """
+    if not _is_task_list_item(node):
+        return None
+
+    paragraph_node = node.children[0]
+    inline_node = paragraph_node.children[0]
+    if inline_node.type != "inline" or not inline_node.children:
+        return None
+
+    html_inline_node = inline_node.children[0]
+    if 'class="task-list-item-checkbox"' not in getattr(html_inline_node, "content", ""):
+        return None
+
+    # Remove the HTML checkbox node before rendering
+    inline_node.children.remove(html_inline_node)
+    return "x" if 'checked="checked"' in html_inline_node.content else " "
+
+
 def _render_list_item(node: RenderTreeNode, context: RenderContext) -> str:
     """Render a list item with appropriate tight/loose formatting.
 
     For single-paragraph items in tight lists, use tight formatting.
     For multi-paragraph items, preserve loose formatting.
+
+    Handles GFM task list items when mdformat-gfm is installed: extracts the
+    checkbox state from the HTML token and prepends [x] or [ ] to the output.
     """
+    # Extract task checkbox before rendering (mutates the node tree)
+    checkmark = _extract_task_checkbox(node)
+
     # Check if this item has multiple paragraphs
     if has_multiple_paragraphs(node):
         # Use loose list formatting for multi-paragraph items
@@ -136,6 +179,13 @@ def _render_list_item(node: RenderTreeNode, context: RenderContext) -> str:
 
     if not text.strip():
         return ""
+
+    if checkmark is not None:
+        # Strip leading space entities left after removing the HTML checkbox node
+        text = re.sub(r"^(&#32;)+", "", text)
+        text = text.lstrip()
+        return f"[{checkmark}] {text}"
+
     return text
 
 
