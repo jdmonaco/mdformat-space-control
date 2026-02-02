@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "mdformat_space_control"
 dynamic = ["version"]
-description = "An mdformat plugin for space control: EditorConfig indentation, tight lists, frontmatter spacing, and wikilinks."
+description = "An mdformat plugin for space control: EditorConfig indentation, tight lists, frontmatter spacing, explicit line breaks, and wikilinks."
 authors = [
     { name = "Joseph Monaco", email = "joe@selfmotion.net" },
 ]
