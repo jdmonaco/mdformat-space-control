@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mdformat_space_control"
-version = "0.3.0"
+dynamic = ["version"]
 description = "An mdformat plugin for space control: EditorConfig indentation, tight lists, frontmatter spacing, and wikilinks."
 authors = [
     { name = "Joseph Monaco", email = "joe@selfmotion.net" },
@@ -42,6 +42,9 @@ Homepage = "https://github.com/jdmonaco/mdformat-space-control"
 
 [project.entry-points."mdformat.parser_extension"]
 space_control = "mdformat_space_control"
+
+[tool.hatch.version]
+path = "mdformat_space_control/__init__.py"
 
 [tool.hatch.build.targets.sdist]
 exclude = [".github/", "tests/"]
