@@ -12,6 +12,7 @@ mdformat-space-control is an mdformat plugin that provides unified control over 
 - **Trailing whitespace removal**: Strips trailing whitespace outside code blocks
 - **Escaped link repair**: Fixes malformed multi-line links from web-clipped content
 - **Wikilink preservation**: Handles Obsidian-style `[[links]]`, `[[links|aliases]]`, `[[page#heading]]`, `[[page#^blockid]]`, and `![[embeds]]`
+- **Explicit line breaks**: Converts soft breaks to hard breaks (`\` + newline) in paragraphs, list items, and blockquotes
 
 This plugin merges functionality from mdformat-editorconfig and mdformat-tight-lists into a single plugin, solving the issue where mdformat only applies one set of list renderers when multiple plugins are installed.
 
@@ -40,6 +41,7 @@ mdformat_space_control/
 - **`plugin.py`**: Provides renderers, postprocessors, and parser extensions:
   - `_wikilink_rule`: Inline parser for Obsidian-style wikilinks
   - `_render_wikilink`: Preserves wikilinks unchanged
+  - `_render_softbreak`: Converts soft breaks to hard breaks (backslash + newline)
   - `_render_list_item`: Per-item tight/loose formatting based on paragraph count
   - `_render_bullet_list`: Configurable indent + content-based tight/loose
   - `_render_ordered_list`: Configurable indent + content-based tight/loose
@@ -78,6 +80,7 @@ space_control = "mdformat_space_control"
 Tested to work alongside:
 - `mdformat-frontmatter` - YAML frontmatter parsing
 - `mdformat-simple-breaks` - Normalizes thematic breaks to `---`
+- `mdformat-gfm` - GFM table parsing (prevents hard breaks in pipe table rows)
 
 Note: Wikilink support is built-in; `mdformat-wikilink` is not needed.
 

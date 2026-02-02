@@ -12,6 +12,7 @@ An [mdformat](https://github.com/executablebooks/mdformat) plugin that provides 
 - **Trailing whitespace removal**: Strips trailing whitespace outside code blocks
 - **Escaped link repair**: Fixes malformed multi-line links from web-clipped content
 - **Wikilink preservation**: Handles Obsidian-style `[[links]]`, `[[links|aliases]]`, `[[page#heading]]`, `[[page#^blockid]]`, and `![[embeds]]`
+- **Explicit line breaks**: Converts soft breaks to hard breaks (`\` + newline) so source line breaks render visually in all Markdown renderers
 
 ## Installation
 
@@ -161,17 +162,39 @@ Wikilinks inside markdown link text are correctly handled without duplication:
 [![[image.jpg]]](http://example.com)
 ```
 
+### Explicit Line Breaks
+
+Soft breaks (plain newlines within paragraphs) are converted to hard breaks (backslash + newline). This makes source line breaks explicit so they render visually regardless of the Markdown renderer's line-break strictness setting. The conversion applies to paragraphs, list items, and blockquotes.
+
+**Before:**
+```markdown
+This is a paragraph with
+a soft line break in the source.
+```
+
+**After:**
+```markdown
+This is a paragraph with\
+a hard line break in the output.
+```
+
+> **Note:** Without a GFM table parser, markdown-it treats pipe tables as paragraphs
+> containing soft breaks, which causes backslashes to appear at the end of table rows.
+> Install `mdformat-gfm` to enable proper table parsing and avoid this issue
+> (see [Compatible Plugins](#compatible-plugins)).
+
 ## Compatible Plugins
 
 This plugin is tested to work alongside:
 
 - [mdformat-frontmatter](https://github.com/butler54/mdformat-frontmatter) - YAML frontmatter parsing
 - [mdformat-simple-breaks](https://github.com/csala/mdformat-simple-breaks) - Normalizes thematic breaks to `---`
+- [mdformat-gfm](https://github.com/hukkin/mdformat-gfm) - GFM table parsing (prevents hard breaks from being inserted into pipe table rows)
 
-For formatting files in an **Obsidian vault**, installing `mdformat-frontmatter` alongside this plugin is recommended:
+For formatting files in an **Obsidian vault**, the recommended install is:
 
 ```bash
-pip install mdformat-space-control mdformat-frontmatter
+pip install mdformat-space-control mdformat-frontmatter mdformat-gfm
 ```
 
 Note: Wikilink support is built-in; `mdformat-wikilink` is not needed.
