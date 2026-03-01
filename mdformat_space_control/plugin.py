@@ -4,6 +4,7 @@ Provides custom renderers that combine:
 - EditorConfig-based indentation settings
 - Tight list formatting with multi-paragraph awareness
 - Frontmatter spacing normalization
+- Smart dash conversion (-- → en-dash, --- → em-dash)
 - Trailing whitespace removal (outside code blocks)
 - Wikilink preservation ([[link]] and ![[embed]] syntax)
 """
@@ -386,6 +387,63 @@ def _strip_trailing_whitespace(text: str) -> str:
     return "\n".join(result)
 
 
+def _convert_dash_sequences(text: str) -> str:
+    """Convert markdown dash sequences to Unicode em-dash and en-dash.
+
+    Converts ``---`` to em-dash (U+2014) and ``--`` to en-dash (U+2013).
+    Preserves dashes inside fenced code blocks and inline code spans.
+    Skips lines that are only dashes (thematic breaks, frontmatter delimiters).
+
+    Em-dash is matched first (longer sequence) to prevent ``---`` from being
+    partially converted as en-dash + hyphen.
+    """
+    # Patterns for inline code span placeholders
+    inline_code_re = re.compile(r"(`+)(.+?)\1")
+
+    # Dash conversion patterns: negative lookahead/behind prevent matching
+    # 4+ dash sequences (e.g., ---- horizontal rules in some contexts)
+    em_dash_re = re.compile(r"(?<!-)---(?!-)")
+    en_dash_re = re.compile(r"(?<!-)--(?!-)")
+
+    # Lines that are only dashes (thematic breaks, frontmatter delimiters)
+    only_dashes_re = re.compile(r"^-{2,}\s*$")
+
+    lines = text.split("\n")
+    result = []
+    in_code_block = False
+
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_code_block = not in_code_block
+            result.append(line)
+        elif in_code_block:
+            result.append(line)
+        elif only_dashes_re.match(line):
+            result.append(line)
+        else:
+            # Protect inline code spans with placeholders
+            placeholders = []
+
+            def _save_code_span(m: re.Match) -> str:
+                placeholders.append(m.group(0))
+                return f"\x00CODE{len(placeholders) - 1}\x00"
+
+            protected = inline_code_re.sub(_save_code_span, line)
+
+            # Convert em-dash first (longer match), then en-dash
+            protected = em_dash_re.sub("\u2014", protected)
+            protected = en_dash_re.sub("\u2013", protected)
+
+            # Restore inline code spans
+            for i, original in enumerate(placeholders):
+                protected = protected.replace(f"\x00CODE{i}\x00", original)
+
+            result.append(protected)
+
+    return "\n".join(result)
+
+
 def _normalize_consecutive_blank_lines(text: str) -> str:
     """Limit consecutive blank lines to a maximum of 2.
 
@@ -425,8 +483,9 @@ def _postprocess_root(text: str, node: RenderTreeNode, context: RenderContext) -
     Applies the following transformations in order:
     1. Frontmatter spacing normalization
     2. Escaped link repair
-    3. Consecutive blank line normalization
-    4. Trailing whitespace removal
+    3. Smart dash conversion (-- → en-dash, --- → em-dash)
+    4. Consecutive blank line normalization
+    5. Trailing whitespace removal
     """
     # 1. Frontmatter spacing
     text = _normalize_frontmatter_spacing(text)
@@ -434,10 +493,13 @@ def _postprocess_root(text: str, node: RenderTreeNode, context: RenderContext) -
     # 2. Repair escaped links (before trailing whitespace removal)
     text = _repair_escaped_links(text)
 
-    # 3. Limit consecutive blank lines to 2
+    # 3. Smart dash conversion
+    text = _convert_dash_sequences(text)
+
+    # 4. Limit consecutive blank lines to 2
     text = _normalize_consecutive_blank_lines(text)
 
-    # 4. Trailing whitespace removal
+    # 5. Trailing whitespace removal
     text = _strip_trailing_whitespace(text)
 
     return text

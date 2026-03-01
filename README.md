@@ -11,6 +11,7 @@ An [mdformat](https://github.com/executablebooks/mdformat) plugin that provides 
 - **Consecutive blank line normalization**: Limits runs of 3+ empty lines to a maximum of 2
 - **Trailing whitespace removal**: Strips trailing whitespace outside code blocks
 - **Escaped link repair**: Fixes malformed multi-line links from web-clipped content
+- **Smart dash conversion**: Converts `--` to en-dash (–) and `---` to em-dash (—), preserving code blocks and inline code
 - **Wikilink preservation**: Handles Obsidian-style `[[links]]`, `[[links|aliases]]`, `[[page#heading]]`, `[[page#^blockid]]`, and `![[embeds]]`
 - **Explicit line breaks**: Converts soft breaks to hard breaks (`\` + newline) so source line breaks render visually in all Markdown renderers
 
@@ -144,6 +145,27 @@ try:
 finally:
     set_current_file(None)
 ```
+
+### Smart Dash Conversion
+
+Markdown dash sequences are automatically converted to their Unicode equivalents:
+
+- `--` → en-dash (–, U+2013)
+- `---` → em-dash (—, U+2014)
+
+**Before:**
+```markdown
+The result---unexpected as it was---changed everything.
+Pages 10--20 of the report.
+```
+
+**After:**
+```markdown
+The result—unexpected as it was—changed everything.
+Pages 10–20 of the report.
+```
+
+Dashes are preserved inside fenced code blocks and inline code spans. Thematic breaks (`---`) and frontmatter delimiters are not affected. Sequences of 4+ dashes are left unchanged.
 
 ### Wikilink Preservation
 

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "mdformat_space_control"
 dynamic = ["version"]
-description = "An mdformat plugin for space control: EditorConfig indentation, tight lists, frontmatter spacing, explicit line breaks, and wikilinks."
+description = "An mdformat plugin for space control: EditorConfig indentation, tight lists, frontmatter spacing, smart dash conversion, explicit line breaks, and wikilinks."
 authors = [
     { name = "Joseph Monaco", email = "joe@selfmotion.net" },
 ]
@@ -22,7 +22,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Text Processing :: Markup :: Markdown",
 ]
-keywords = ["mdformat", "markdown", "formatter", "editorconfig", "indentation", "lists", "frontmatter", "wikilink", "obsidian"]
+keywords = ["mdformat", "markdown", "formatter", "editorconfig", "indentation", "lists", "frontmatter", "wikilink", "obsidian", "typography"]
 requires-python = ">=3.10"
 dependencies = [
     "mdformat>=0.7.0",
