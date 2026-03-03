@@ -274,13 +274,14 @@ def _render_wikilink(node: RenderTreeNode, context: RenderContext) -> str:
 
 
 def _render_softbreak(node: RenderTreeNode, context: RenderContext) -> str:
-    """Render soft breaks with terminal backslash.
+    """Join soft breaks into a single line.
 
-    Converts soft breaks (plain newlines within paragraphs) to hard breaks
-    (backslash + newline) to preserve visible line-break rendering and avoid
-    relying on trailing whitespace.
+    Soft breaks (plain newlines within paragraphs) are editor-inserted
+    line wraps, not intentional visible breaks. Join them with a space
+    to normalize to single-line paragraphs. This matches CommonMark
+    rendering behavior where soft breaks produce spaces in HTML output.
     """
-    return "\\" + "\n"
+    return " "
 
 
 # A mapping from syntax tree node type to a function that renders it.

@@ -104,12 +104,9 @@ indent_size = 4
    continuation lines
 """
         expected = """\
-1. First item with\\
-\tcontinuation line
+1. First item with continuation line
 2. Second item
-3. Third item with\\
-\tmultiple\\
-\tcontinuation lines
+3. Third item with multiple continuation lines
 """
         with tempfile.TemporaryDirectory() as tmpdir:
             ec_path = Path(tmpdir) / ".editorconfig"

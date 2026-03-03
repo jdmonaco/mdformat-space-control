@@ -81,8 +81,7 @@ indent_size = 4
 - Item 2
 """
         expected = """\
-- Item 1\\
-    with continuation
+- Item 1 with continuation
 - Item 2
 """
         result = format_with_context(input_text, md_file)

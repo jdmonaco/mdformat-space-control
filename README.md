@@ -13,7 +13,7 @@ An [mdformat](https://github.com/executablebooks/mdformat) plugin that provides 
 - **Escaped link repair**: Fixes malformed multi-line links from web-clipped content
 - **Smart dash conversion**: Converts `--` to en-dash (–) and `---` to em-dash (—), preserving code blocks, inline code, HTML comments, and HTML tags
 - **Wikilink preservation**: Handles Obsidian-style `[[links]]`, `[[links|aliases]]`, `[[page#heading]]`, `[[page#^blockid]]`, and `![[embeds]]`
-- **Explicit line breaks**: Converts soft breaks to hard breaks (`\` + newline) so source line breaks render visually in all Markdown renderers
+- **Soft break joining**: Joins soft breaks (plain newlines within paragraphs) into single lines, normalizing to single-line paragraphs
 
 ## Installation
 
@@ -184,9 +184,9 @@ Wikilinks inside markdown link text are correctly handled without duplication:
 [![[image.jpg]]](http://example.com)
 ```
 
-### Explicit Line Breaks
+### Soft Break Joining
 
-Soft breaks (plain newlines within paragraphs) are converted to hard breaks (backslash + newline). This makes source line breaks explicit so they render visually regardless of the Markdown renderer's line-break strictness setting. The conversion applies to paragraphs, list items, and blockquotes.
+Soft breaks (plain newlines within paragraphs) are joined into single lines with spaces. This normalizes editor-inserted line wraps to single-line paragraphs, matching CommonMark rendering behavior where soft breaks produce spaces in HTML output. The joining applies to paragraphs, list items, and blockquotes.
 
 **Before:**
 ```markdown
@@ -196,14 +196,10 @@ a soft line break in the source.
 
 **After:**
 ```markdown
-This is a paragraph with\
-a hard line break in the output.
+This is a paragraph with a soft line break in the source.
 ```
 
-> **Note:** Without a GFM table parser, markdown-it treats pipe tables as paragraphs
-> containing soft breaks, which causes backslashes to appear at the end of table rows.
-> Install `mdformat-gfm` to enable proper table parsing and avoid this issue
-> (see [Compatible Plugins](#compatible-plugins)).
+Explicit hard breaks (`\` + newline) are preserved unchanged.
 
 ## Compatible Plugins
 

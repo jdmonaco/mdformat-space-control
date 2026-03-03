@@ -219,8 +219,7 @@ checkbox with continuation
   continuation text
 - [x] Another task
 .
-- [ ] Task with\
-  continuation text
+- [ ] Task with continuation text
 - [x] Another task
 .
 
