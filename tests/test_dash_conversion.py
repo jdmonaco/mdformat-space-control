@@ -275,3 +275,113 @@ class TestDashConversionFunction:
         from mdformat_space_control.plugin import _convert_dash_sequences
 
         assert _convert_dash_sequences("") == ""
+
+    def test_html_comment_preserved(self):
+        """Direct function test: HTML comments are preserved."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        assert _convert_dash_sequences("<!-- comment -->") == "<!-- comment -->"
+
+    def test_html_triple_dash_comment_preserved(self):
+        """Direct function test: triple-dash HTML comments are preserved."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        assert _convert_dash_sequences("<!--- comment --->") == "<!--- comment --->"
+
+    def test_html_tag_with_dashes_preserved(self):
+        """Direct function test: HTML tags with dash attributes are preserved."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        text = '<div data-value="test--value">'
+        assert _convert_dash_sequences(text) == text
+
+    def test_html_self_closing_tag_preserved(self):
+        """Direct function test: self-closing HTML tags with dashes preserved."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        text = '<img alt="a--b" />'
+        assert _convert_dash_sequences(text) == text
+
+    def test_html_comment_with_surrounding_dashes(self):
+        """Direct function test: dashes outside HTML convert, inside preserved."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        text = "word--word <!-- comment --> word---word"
+        expected = "word\u2013word <!-- comment --> word\u2014word"
+        assert _convert_dash_sequences(text) == expected
+
+    def test_multiline_html_comment_preserved(self):
+        """Direct function test: multi-line HTML comments are preserved."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        text = "<!--\ncomment with--dashes\n-->"
+        assert _convert_dash_sequences(text) == text
+
+    def test_multiline_html_comment_with_surrounding_text(self):
+        """Direct function test: text around multi-line HTML comment converts."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        text = "before--after\n<!--\ncomment--here\n-->\nmore--text"
+        expected = "before\u2013after\n<!--\ncomment--here\n-->\nmore\u2013text"
+        assert _convert_dash_sequences(text) == expected
+
+
+class TestDashConversionHTML:
+    """Tests for HTML comment and tag preservation through mdformat."""
+
+    def test_single_line_html_comment(self):
+        """Single-line HTML comment should be preserved."""
+        input_text = "<!-- comment -->\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "<!--" in result
+        assert "-->" in result
+        assert "\u2013" not in result
+        assert "\u2014" not in result
+
+    def test_triple_dash_comment(self):
+        """Triple-dash HTML comment should be preserved."""
+        input_text = "<!--- comment --->\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "<!---" in result
+        assert "--->" in result
+        assert "\u2014" not in result
+
+    def test_block_level_html_comment(self):
+        """Block-level HTML comment (own paragraph) should be preserved."""
+        input_text = "Text.\n\n<!-- block comment -->\n\nMore text.\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "<!-- block comment -->" in result
+
+    def test_inline_html_comment_with_dashes(self):
+        """Dashes outside HTML comment convert; comment preserved."""
+        input_text = "Text--here <!-- comment --> more---text.\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "<!-- comment -->" in result
+        assert "\u2013" in result  # en-dash from --
+        assert "\u2014" in result  # em-dash from ---
+
+    def test_multi_line_html_comment(self):
+        """Multi-line HTML comment should be preserved."""
+        input_text = "Text.\n\n<!--\ncomment with--dashes\n-->\n\nMore text.\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "\u2013" not in result
+        assert "\u2014" not in result
+
+    def test_html_tag_with_dash_attributes(self):
+        """HTML tags with dash-containing attributes should be preserved."""
+        input_text = '<div data-value="test--value">\n\nContent.\n\n</div>\n'
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert 'data-value="test--value"' in result
+
+    def test_self_closing_tag_with_dashes(self):
+        """Self-closing HTML tags with dashes should be preserved."""
+        input_text = '<img alt="a--b" />\n'
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert 'alt="a--b"' in result
+
+    def test_dashes_outside_html_still_convert(self):
+        """Dashes outside HTML elements should still convert normally."""
+        input_text = "word--word and word---word\n"
+        expected = "word\u2013word and word\u2014word\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected

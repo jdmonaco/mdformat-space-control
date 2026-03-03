@@ -391,7 +391,8 @@ def _convert_dash_sequences(text: str) -> str:
     """Convert markdown dash sequences to Unicode em-dash and en-dash.
 
     Converts ``---`` to em-dash (U+2014) and ``--`` to en-dash (U+2013).
-    Preserves dashes inside fenced code blocks and inline code spans.
+    Preserves dashes inside fenced code blocks, inline code spans,
+    HTML comments, and HTML tags.
     Skips lines that are only dashes (thematic breaks, frontmatter delimiters).
 
     Em-dash is matched first (longer sequence) to prevent ``---`` from being
@@ -399,6 +400,10 @@ def _convert_dash_sequences(text: str) -> str:
     """
     # Patterns for inline code span placeholders
     inline_code_re = re.compile(r"(`+)(.+?)\1")
+
+    # HTML protection patterns
+    html_comment_re = re.compile(r"<!--.*?-->")
+    html_tag_re = re.compile(r"<[^>]+>")
 
     # Dash conversion patterns: negative lookahead/behind prevent matching
     # 4+ dash sequences (e.g., ---- horizontal rules in some contexts)
@@ -411,6 +416,7 @@ def _convert_dash_sequences(text: str) -> str:
     lines = text.split("\n")
     result = []
     in_code_block = False
+    in_html_comment = False
 
     for line in lines:
         stripped = line.lstrip()
@@ -419,23 +425,38 @@ def _convert_dash_sequences(text: str) -> str:
             result.append(line)
         elif in_code_block:
             result.append(line)
+        elif in_html_comment:
+            # Inside a multi-line HTML comment, skip dash conversion
+            if "-->" in line:
+                in_html_comment = False
+            result.append(line)
         elif only_dashes_re.match(line):
             result.append(line)
         else:
-            # Protect inline code spans with placeholders
+            # Check for multi-line HTML comment opening (no closing on same line)
+            if "<!--" in line and "-->" not in line:
+                in_html_comment = True
+                result.append(line)
+                continue
+
+            # Protect inline code spans and HTML elements with placeholders
             placeholders = []
 
-            def _save_code_span(m: re.Match) -> str:
+            def _save_placeholder(m: re.Match) -> str:
                 placeholders.append(m.group(0))
                 return f"\x00CODE{len(placeholders) - 1}\x00"
 
-            protected = inline_code_re.sub(_save_code_span, line)
+            protected = inline_code_re.sub(_save_placeholder, line)
+
+            # Protect HTML comments first (longer matches), then tags
+            protected = html_comment_re.sub(_save_placeholder, protected)
+            protected = html_tag_re.sub(_save_placeholder, protected)
 
             # Convert em-dash first (longer match), then en-dash
             protected = em_dash_re.sub("\u2014", protected)
             protected = en_dash_re.sub("\u2013", protected)
 
-            # Restore inline code spans
+            # Restore placeholders
             for i, original in enumerate(placeholders):
                 protected = protected.replace(f"\x00CODE{i}\x00", original)
 
