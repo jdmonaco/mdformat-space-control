@@ -10,6 +10,7 @@ mdformat-space-control is an mdformat plugin that provides unified control over 
 - **Frontmatter spacing**: Normalizes spacing after YAML frontmatter (works with mdformat-frontmatter)
 - **Consecutive blank line normalization**: Limits runs of 3+ empty lines to a maximum of 2
 - **Trailing whitespace removal**: Strips trailing whitespace outside code blocks
+- **Smart dash conversion**: Converts `--` to en-dash and `---` to em-dash, with protection for HTML comments, tags, code blocks, and inline code spans
 - **Escaped link repair**: Fixes malformed multi-line links from web-clipped content
 - **Wikilink preservation**: Handles Obsidian-style `[[links]]`, `[[links|aliases]]`, `[[page#heading]]`, `[[page#^blockid]]`, and `![[embeds]]`
 - **Explicit line breaks**: Converts soft breaks to hard breaks (`\` + newline) in paragraphs, list items, and blockquotes
@@ -45,7 +46,7 @@ mdformat_space_control/
   - `_render_list_item`: Per-item tight/loose formatting based on paragraph count
   - `_render_bullet_list`: Configurable indent + content-based tight/loose
   - `_render_ordered_list`: Configurable indent + content-based tight/loose
-  - `_postprocess_root`: Combined postprocessor applying frontmatter spacing, escaped link repair, consecutive blank line normalization, and trailing whitespace removal
+  - `_postprocess_root`: Combined postprocessor applying frontmatter spacing, smart dash conversion, escaped link repair, consecutive blank line normalization, and trailing whitespace removal
 
 ## Plugin Extension Points
 
@@ -66,6 +67,7 @@ space_control = "mdformat_space_control"
 - **`tests/test_fixtures.py`**: Parametrized fixture tests
 - **`tests/test_editorconfig.py`**: EditorConfig-specific tests using temp directories
 - **`tests/test_frontmatter.py`**: Frontmatter spacing tests (requires mdformat-frontmatter)
+- **`tests/test_dash_conversion.py`**: Smart dash conversion with HTML comment/tag protection
 - **`tests/test_spacing_features.py`**: Trailing whitespace, hard breaks, escaped link repair, consecutive blank line tests
 - **`tests/test_integration.py`**: Full-stack integration tests combining multiple features
 - **`tests/test_plugin_interactions.py`**: Tests for compatibility with other mdformat plugins
