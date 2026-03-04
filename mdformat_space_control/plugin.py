@@ -411,6 +411,9 @@ def _convert_dash_sequences(text: str) -> str:
     em_dash_re = re.compile(r"(?<!-)---(?!-)")
     en_dash_re = re.compile(r"(?<!-)--(?!-)")
 
+    # CLI option pattern: --word or ---word preceded by whitespace or line start
+    cli_option_re = re.compile(r"(?<=\s)-{2,3}(?=\w)")
+
     # Lines that are only dashes (thematic breaks, frontmatter delimiters)
     only_dashes_re = re.compile(r"^-{2,}\s*$")
 
@@ -452,6 +455,9 @@ def _convert_dash_sequences(text: str) -> str:
             # Protect HTML comments first (longer matches), then tags
             protected = html_comment_re.sub(_save_placeholder, protected)
             protected = html_tag_re.sub(_save_placeholder, protected)
+
+            # Protect CLI option dashes (e.g., --output, ---long-opt)
+            protected = cli_option_re.sub(_save_placeholder, protected)
 
             # Convert em-dash first (longer match), then en-dash
             protected = em_dash_re.sub("\u2014", protected)
