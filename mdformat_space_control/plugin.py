@@ -472,9 +472,13 @@ def _convert_dash_sequences(text: str) -> str:
             protected = em_dash_re.sub("\u2014", protected)
             protected = en_dash_re.sub("\u2013", protected)
 
-            # Restore placeholders
-            for i, original in enumerate(placeholders):
-                protected = protected.replace(f"\x00CODE{i}\x00", original)
+            # Restore placeholders in reverse order so nested captures
+            # (where a later placeholder's value contains an earlier tag)
+            # are unwound correctly
+            for i in range(len(placeholders) - 1, -1, -1):
+                protected = protected.replace(
+                    f"\x00CODE{i}\x00", placeholders[i]
+                )
 
             result.append(protected)
 
