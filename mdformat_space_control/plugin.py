@@ -414,6 +414,10 @@ def _convert_dash_sequences(text: str) -> str:
     # CLI option pattern: --word or ---word preceded by whitespace or line start
     cli_option_re = re.compile(r"(?<=\s)-{2,3}(?=\w)")
 
+
+    # URI pattern: protect scheme://... tokens from dash conversion
+    uri_re = re.compile(r"\w+://\S+")
+
     # Lines that are only dashes (thematic breaks, frontmatter delimiters)
     # or separator lines starting/ending with dashes (e.g., "--- Title ---")
     only_dashes_re = re.compile(r"^-{2,}\s*$")
@@ -457,6 +461,9 @@ def _convert_dash_sequences(text: str) -> str:
             # Protect HTML comments first (longer matches), then tags
             protected = html_comment_re.sub(_save_placeholder, protected)
             protected = html_tag_re.sub(_save_placeholder, protected)
+
+            # Protect URIs (e.g., gs://bucket--name/path)
+            protected = uri_re.sub(_save_placeholder, protected)
 
             # Protect CLI option dashes (e.g., --output, ---long-opt)
             protected = cli_option_re.sub(_save_placeholder, protected)
