@@ -417,7 +417,7 @@ def _convert_dash_sequences(text: str) -> str:
     # Lines that are only dashes (thematic breaks, frontmatter delimiters)
     # or separator lines starting/ending with dashes (e.g., "--- Title ---")
     only_dashes_re = re.compile(r"^-{2,}\s*$")
-    separator_line_re = re.compile(r"^-{2,3}\s+.*\s+-{2,3}\s*$")
+    separator_line_re = re.compile(r"^-{2,}\s+.*\s+-{2,}\s*$")
 
     lines = text.split("\n")
     result = []
