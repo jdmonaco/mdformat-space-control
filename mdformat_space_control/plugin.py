@@ -415,7 +415,9 @@ def _convert_dash_sequences(text: str) -> str:
     cli_option_re = re.compile(r"(?<=\s)-{2,3}(?=\w)")
 
     # Lines that are only dashes (thematic breaks, frontmatter delimiters)
+    # or separator lines starting/ending with dashes (e.g., "--- Title ---")
     only_dashes_re = re.compile(r"^-{2,}\s*$")
+    separator_line_re = re.compile(r"^-{2,3}\s+.*\s+-{2,3}\s*$")
 
     lines = text.split("\n")
     result = []
@@ -434,7 +436,7 @@ def _convert_dash_sequences(text: str) -> str:
             if "-->" in line:
                 in_html_comment = False
             result.append(line)
-        elif only_dashes_re.match(line):
+        elif only_dashes_re.match(line) or separator_line_re.match(stripped):
             result.append(line)
         else:
             # Check for multi-line HTML comment opening (no closing on same line)
