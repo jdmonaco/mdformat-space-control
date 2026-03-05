@@ -418,10 +418,12 @@ def _convert_dash_sequences(text: str) -> str:
     # URI pattern: protect scheme://... tokens from dash conversion
     uri_re = re.compile(r"\w+://\S+")
 
-    # Lines that are only dashes (thematic breaks, frontmatter delimiters)
-    # or separator lines starting/ending with dashes (e.g., "--- Title ---")
+    # Lines that are only dashes (thematic breaks, frontmatter delimiters),
+    # separator lines starting/ending with dashes (e.g., "--- Title ---"),
+    # or GFM table separator rows (e.g., "| -- | -- |" or "| --- | --- |")
     only_dashes_re = re.compile(r"^-{2,}\s*$")
     separator_line_re = re.compile(r"^-{2,}\s+.*\s+-{2,}\s*$")
+    table_sep_re = re.compile(r"^\|[\s\-:|]+\|$")
 
     lines = text.split("\n")
     result = []
@@ -440,7 +442,8 @@ def _convert_dash_sequences(text: str) -> str:
             if "-->" in line:
                 in_html_comment = False
             result.append(line)
-        elif only_dashes_re.match(line) or separator_line_re.match(stripped):
+        elif (only_dashes_re.match(line) or separator_line_re.match(stripped)
+              or table_sep_re.match(stripped)):
             result.append(line)
         else:
             # Check for multi-line HTML comment opening (no closing on same line)
