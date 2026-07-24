@@ -27,14 +27,20 @@ from mdformat_space_control.config import get_indent_config
 # Wikilink pattern for Obsidian-style links:
 #   [[page]], [[page|alias]], [[page#heading]], [[page#^blockid]],
 #   [[#heading]], ![[embed]], ![[image.jpg]], etc.
+#
+# Obsidian permits literal '[' and ']' inside the target/alias (e.g. an
+# email subject like "[EXTERNAL] ..." used as a note title), so the body is
+# matched as "any character up to the first closing ]]" rather than a
+# bracket-excluding class. The non-greedy body with a (?!\]\]) guard stops at
+# the first ]] and never merges two adjacent links (`[[a]] [[b]]`).
+#
 # Pattern breakdown:
 #   !?                        - optional embed prefix
 #   \[\[                      - opening [[
-#   [^\[\]|]*                 - target (no brackets or pipe)
-#   (?:#[^\[\]|]*)*           - zero or more #heading/#^block sections
-#   (?:\|[^\[\]]+)?           - optional |alias
+#   ((?:(?!\]\]).)*?)         - body (any chars, incl. single brackets/pipe),
+#                               non-greedy, up to the first ]]
 #   \]\]                      - closing ]]
-WIKILINK_PATTERN = re.compile(r"!?\[\[([^\[\]|]*(?:#[^\[\]|]*)*)(?:\|[^\[\]]+)?\]\]")
+WIKILINK_PATTERN = re.compile(r"!?\[\[((?:(?!\]\]).)*?)\]\]")
 
 
 def _wikilink_rule(state: StateInline, silent: bool) -> bool:
@@ -61,13 +67,70 @@ def _wikilink_rule(state: StateInline, silent: bool) -> bool:
     return True
 
 
+# A wikilink occurrence used for in-table pipe-escaping. Same body semantics
+# as WIKILINK_PATTERN (any char up to the first ]]), but confined to a single
+# line since table rows are processed line by line.
+_WIKILINK_SPAN_RE = re.compile(r"!?\[\[(?:(?!\]\])[^\n])*?\]\]")
+
+# A GFM table row: a line whose stripped form starts with '|'. This is a
+# heuristic (the true test requires a delimiter row), but escaping a pipe
+# inside a wikilink is a no-op anywhere it is not a cell delimiter, so a
+# false positive is harmless.
+_TABLE_ROW_RE = re.compile(r"^\s*\|")
+
+_FENCE_RE = re.compile(r"^\s*(```|~~~)")
+
+
+def _escape_wikilink_pipes_in_tables(src: str) -> str:
+    """Escape unescaped '|' inside wikilinks that sit on table rows.
+
+    GFM tables split rows into cells at the block-parse stage using raw '|'.
+    A wikilink alias pipe (``[[target|alias]]``) is therefore seen as a cell
+    delimiter and splits the cell before the inline wikilink rule can claim
+    the link. Escaping the pipe to ``\\|`` — the correct GFM form for a
+    literal pipe in a cell — keeps the wikilink intact and renders correctly
+    in Obsidian.
+
+    Scoped to table rows so that prose wikilinks (where a bare '|' is correct)
+    are left untouched. Skips fenced code blocks.
+    """
+    if "[[" not in src or "|" not in src:
+        return src
+
+    out = []
+    in_fence = False
+    for line in src.split("\n"):
+        if _FENCE_RE.match(line):
+            in_fence = not in_fence
+            out.append(line)
+            continue
+        if in_fence or not _TABLE_ROW_RE.match(line):
+            out.append(line)
+            continue
+
+        def _escape(m: "re.Match") -> str:
+            return re.sub(r"(?<!\\)\|", r"\\|", m.group(0))
+
+        out.append(_WIKILINK_SPAN_RE.sub(_escape, line))
+
+    return "\n".join(out)
+
+
+def _wikilink_pipe_rule(state) -> None:
+    """Core rule: escape wikilink pipes in tables before block parsing."""
+    state.src = _escape_wikilink_pipes_in_tables(state.src)
+
+
 def update_mdit(mdit: MarkdownIt) -> None:
     """Update the markdown-it parser.
 
     Adds wikilink parsing support for Obsidian-style [[link]] and ![[embed]]
-    syntax. The rule runs before the link parser to correctly handle wikilinks
-    that appear inside markdown link text.
+    syntax. The inline rule runs before the link parser to correctly handle
+    wikilinks that appear inside markdown link text. A core rule runs before
+    block parsing to escape '|' inside wikilinks on table rows, so the table
+    parser does not split a wikilink alias into two cells.
     """
+    mdit.core.ruler.before("block", "wikilink_pipe_escape", _wikilink_pipe_rule)
     mdit.inline.ruler.before("link", "wikilink", _wikilink_rule)
 
 

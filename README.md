@@ -184,6 +184,20 @@ Wikilinks inside markdown link text are correctly handled without duplication:
 [![[image.jpg]]](http://example.com)
 ```
 
+Literal square brackets inside a target are preserved (e.g. a note titled like an email subject), and are not escaped as stray link syntax:
+
+```markdown
+[[[EXTERNAL] requesting feedback]]
+```
+
+Inside GFM table cells, an alias pipe is escaped to `\|` so the table parser does not split the wikilink across two columns (this requires `mdformat-gfm`). The escaped pipe renders correctly in Obsidian, and prose wikilinks keep a bare `|`:
+
+```markdown
+| Note | Status |
+| -- | -- |
+| [[path/to/note|Short Alias]] | Active |
+```
+
 ### Soft Break Joining
 
 Soft breaks (plain newlines within paragraphs) are joined into single lines with spaces. This normalizes editor-inserted line wraps to single-line paragraphs, matching CommonMark rendering behavior where soft breaks produce spaces in HTML output. The joining applies to paragraphs, list items, and blockquotes.

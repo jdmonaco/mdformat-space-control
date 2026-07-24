@@ -119,6 +119,88 @@ class TestBuiltinWikilinks:
         result = mdformat.text(input_text, extensions={"space_control"})
         assert "[[Note#Section#^blockid|alias]]" in result
 
+    def test_wikilink_with_brackets_in_target(self):
+        """Literal [ ] inside a wikilink target must not be escaped.
+
+        Regression: a note titled like an email subject ("[EXTERNAL] ...")
+        used as a wikilink target was not matched by the wikilink rule, so
+        mdformat escaped the outer brackets to \\[\\[ ... \\]\\].
+        """
+        input_text = "- [[[EXTERNAL] requesting feedback]] (2026-05-07)\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "[[[EXTERNAL] requesting feedback]]" in result
+        assert "\\[\\[" not in result
+
+    def test_adjacent_wikilinks_not_merged(self):
+        """Two adjacent wikilinks stay separate (non-greedy body)."""
+        input_text = "See [[one]] and [[two]] here.\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert "[[one]]" in result and "[[two]]" in result
+
+
+try:
+    import mdformat_gfm  # noqa: F401
+
+    HAS_GFM = True
+except ImportError:
+    HAS_GFM = False
+
+
+@pytest.mark.skipif(not HAS_GFM, reason="mdformat-gfm not installed")
+class TestWikilinkPipeInTables:
+    """Wikilink alias pipes inside GFM table cells.
+
+    A GFM table splits rows into cells at the block-parse stage using raw
+    '|', so a wikilink alias pipe (``[[target|alias]]``) was seen as a cell
+    delimiter and split the cell before the inline wikilink rule ran. The
+    core rule escapes such pipes to ``\\|`` (correct GFM for a literal pipe)
+    so the wikilink survives intact.
+    """
+
+    EXTS = {"space_control", "gfm"}
+
+    def test_pipe_in_table_wikilink_is_escaped_not_split(self):
+        src = "| Case | Point |\n| -- | -- |\n| [[a/b (X)|Alias]] | Y |\n"
+        result = mdformat.text(src, extensions=self.EXTS)
+        # The wikilink stays in one cell with an escaped pipe.
+        assert "[[a/b (X)\\|Alias]]" in result
+        assert "\\[\\[" not in result
+        # The row still has exactly the two intended cells (Alias is not a
+        # column of its own, Y is preserved).
+        row = [l for l in result.splitlines() if "Alias" in l][0]
+        assert "| Y " in row or "| Y|" in row
+
+    def test_prose_pipe_stays_bare(self):
+        """Outside tables, a wikilink pipe must remain unescaped."""
+        src = "A prose link [[page|alias]] here.\n"
+        result = mdformat.text(src, extensions=self.EXTS)
+        assert "[[page|alias]]" in result
+        assert "\\|" not in result
+
+    def test_brackets_and_pipe_in_table(self):
+        src = "| A | B |\n| -- | -- |\n| [[[EXTERNAL] subj|My Alias]] | z |\n"
+        result = mdformat.text(src, extensions=self.EXTS)
+        assert "[[[EXTERNAL] subj\\|My Alias]]" in result
+        assert "\\[\\[" not in result
+
+    def test_already_escaped_pipe_not_double_escaped(self):
+        src = "| A | B |\n| -- | -- |\n| [[a/b (X)\\|Alias]] | Y |\n"
+        result = mdformat.text(src, extensions=self.EXTS)
+        assert "\\\\|" not in result
+        assert "[[a/b (X)\\|Alias]]" in result
+
+    def test_table_wikilink_idempotent(self):
+        src = "| A | B |\n| -- | -- |\n| [[a (X)|Alias]] | z |\n"
+        once = mdformat.text(src, extensions=self.EXTS)
+        twice = mdformat.text(once, extensions=self.EXTS)
+        assert once == twice
+
+    def test_code_fence_pipe_untouched(self):
+        """A '|' inside a fenced code block is never escaped."""
+        src = "```\n[[a|b]]\n```\n"
+        result = mdformat.text(src, extensions=self.EXTS)
+        assert "[[a|b]]" in result
+
 
 @pytest.mark.skipif(not HAS_SIMPLE_BREAKS, reason="mdformat-simple-breaks not installed")
 class TestWithSimpleBreaks:
