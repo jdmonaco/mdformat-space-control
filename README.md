@@ -165,7 +165,9 @@ The result—unexpected as it was—changed everything.
 Pages 10–20 of the report.
 ```
 
-Dashes are preserved inside fenced code blocks, inline code spans, HTML comments, and HTML tags. Thematic breaks (`---`) and frontmatter delimiters are not affected. Sequences of 4+ dashes are left unchanged.
+Dashes are preserved inside fenced code blocks, inline code spans, HTML comments, and HTML tags. Thematic breaks (`---`), GFM table separator rows (`| -- | -- |`), and frontmatter delimiters are not affected. Sequences of 4+ dashes are left unchanged.
+
+These exclusions apply equally inside blockquotes, at any nesting depth: leading `>` markers are stripped before block-level patterns are matched, so tables and code fences in a blockquote or Obsidian callout are preserved just as they are at the top level.
 
 ### Wikilink Preservation
 

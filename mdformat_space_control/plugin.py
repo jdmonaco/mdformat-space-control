@@ -425,6 +425,19 @@ def _normalize_frontmatter_spacing(text: str) -> str:
     return before_content + after_content
 
 
+# Leading blockquote markers ('>' with optional spaces), possibly nested and
+# possibly indented. Block-level constructs inside a blockquote -- code fences,
+# GFM table separator rows, thematic breaks -- are recognized only after these
+# markers are stripped, so line-scanning postprocessors must strip them first
+# or they mis-handle every blockquoted table and fenced block.
+_BLOCKQUOTE_PREFIX_RE = re.compile(r"^[ \t]*(?:>[ \t]?)+")
+
+
+def _strip_block_markers(line: str) -> str:
+    """Return ``line`` without leading blockquote markers and indentation."""
+    return _BLOCKQUOTE_PREFIX_RE.sub("", line).lstrip()
+
+
 def _strip_trailing_whitespace(text: str) -> str:
     """Strip trailing whitespace, preserving code blocks.
 
@@ -436,8 +449,8 @@ def _strip_trailing_whitespace(text: str) -> str:
     in_code_block = False
 
     for line in lines:
-        # Track fenced code block state
-        stripped = line.lstrip()
+        # Track fenced code block state (blockquoted fences included)
+        stripped = _strip_block_markers(line)
         if stripped.startswith("```") or stripped.startswith("~~~"):
             in_code_block = not in_code_block
             result.append(line.rstrip())  # Strip fence line itself
@@ -494,7 +507,9 @@ def _convert_dash_sequences(text: str) -> str:
     in_html_comment = False
 
     for line in lines:
-        stripped = line.lstrip()
+        # Strip blockquote markers so block constructs nested in a blockquote
+        # (fences, table separator rows, thematic breaks) are recognized.
+        stripped = _strip_block_markers(line)
         if stripped.startswith("```") or stripped.startswith("~~~"):
             in_code_block = not in_code_block
             result.append(line)
@@ -505,7 +520,8 @@ def _convert_dash_sequences(text: str) -> str:
             if "-->" in line:
                 in_html_comment = False
             result.append(line)
-        elif (only_dashes_re.match(line) or separator_line_re.match(stripped)
+        elif (only_dashes_re.match(stripped)
+              or separator_line_re.match(stripped)
               or table_sep_re.match(stripped)):
             result.append(line)
         else:

@@ -385,3 +385,91 @@ class TestDashConversionHTML:
         expected = "word\u2013word and word\u2014word\n"
         result = mdformat.text(input_text, extensions={"space_control"})
         assert result == expected
+
+
+class TestDashConversionInBlockquotes:
+    """Block constructs nested in a blockquote must be recognized.
+
+    Dash conversion scans line by line, so it sees '> | -- | -- |', not
+    '| -- | -- |'. Blockquote markers must be stripped before block-level
+    patterns are matched; otherwise GFM table separator rows inside a
+    blockquote or Obsidian callout get smart-punctuated into '| - | - |',
+    which breaks table rendering in Obsidian.
+
+    These test _convert_dash_sequences directly rather than through
+    mdformat.text() so they do not depend on the gfm parser extension,
+    which is deliberately not a dependency of this plugin.
+    """
+
+    def test_blockquote_table_separator_preserved(self):
+        """A table separator row inside a blockquote must keep its dashes."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        text = "> | A | B |\n> | -- | -- |\n> | 1 | 2 |"
+        assert _convert_dash_sequences(text) == text
+
+    def test_obsidian_callout_table_separator_preserved(self):
+        """Tables inside an Obsidian callout must survive conversion."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        text = (
+            "> [!note] Landscape\n>\n> | Model | Size |\n"
+            "> | -- | -- |\n> | Qwen3 | 27B |"
+        )
+        assert _convert_dash_sequences(text) == text
+
+    def test_nested_blockquote_table_separator_preserved(self):
+        """Separator rows survive at any blockquote nesting depth."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        text = ">> | A | B |\n>> | -- | -- |\n>> | 1 | 2 |"
+        assert _convert_dash_sequences(text) == text
+
+    def test_indented_blockquote_separator_preserved(self):
+        """Indented blockquote markers are stripped before matching."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        text = "  > | A | B |\n  > | -- | -- |"
+        assert _convert_dash_sequences(text) == text
+
+    def test_blockquote_alignment_separator_preserved(self):
+        """Alignment colons in a blockquoted separator row are preserved."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        text = "> | A | B |\n> | :-- | --: |\n> | 1 | 2 |"
+        assert _convert_dash_sequences(text) == text
+
+    def test_blockquote_code_fence_preserved(self):
+        """Dashes in a fenced code block inside a blockquote are preserved."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        text = "> ```bash\n> mdfmt -- file.md\n> a -- b\n> ```"
+        assert _convert_dash_sequences(text) == text
+
+    def test_blockquote_thematic_break_preserved(self):
+        """A thematic break inside a blockquote is not converted."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        assert _convert_dash_sequences("> ---") == "> ---"
+
+    def test_blockquote_prose_dash_still_converts(self):
+        """Genuine prose dashes inside a blockquote still convert."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        result = _convert_dash_sequences("> quoted prose -- with a dash")
+        assert result == "> quoted prose \u2013 with a dash"
+
+    def test_blockquote_conversion_is_idempotent(self):
+        """Repeated conversion of a blockquoted table is a fixed point."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        text = "> | A | B |\n> | -- | -- |\n> | 1 | 2 |"
+        once = _convert_dash_sequences(text)
+        assert _convert_dash_sequences(once) == once == text
+
+    def test_plain_table_separator_still_preserved(self):
+        """The non-blockquoted case keeps working."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        text = "| A | B |\n| -- | -- |\n| 1 | 2 |"
+        assert _convert_dash_sequences(text) == text
