@@ -217,6 +217,57 @@ class TestDashConversionEdgeCases:
         assert result == expected
 
 
+class TestDashConversionLinkTargets:
+    """Wikilink and link-destination targets are paths, not typography."""
+
+    def test_wikilink_embed_target_preserved(self):
+        """A YouTube id with -- in an image embed path must round-trip."""
+        input_text = "![[images/1ZWaSGfw--M/frame-0000.jpg]]\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == input_text
+
+    def test_wikilink_target_preserved(self):
+        """Dashes in a plain wikilink target are preserved."""
+        input_text = "See [[Notes/draft--v2]] for details.\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == input_text
+
+    def test_wikilink_with_alias_preserved(self):
+        """Target and alias of an aliased wikilink are left untouched."""
+        input_text = "[[Report--2026|Report -- 2026]]\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == input_text
+
+    def test_prose_around_wikilink_still_converts(self):
+        """Protection is scoped to the link; surrounding prose converts."""
+        input_text = "Frame--see [[images/a--b.jpg]]--below.\n"
+        expected = "Frame\u2013see [[images/a--b.jpg]]\u2013below.\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+    def test_markdown_image_destination_preserved(self):
+        """Dashes in a markdown image destination are preserved."""
+        input_text = "![frame](images/1ZWaSGfw--M/frame-0000.jpg)\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == input_text
+
+    def test_markdown_link_text_converts_destination_preserved(self):
+        """Link text is prose and converts; the destination does not."""
+        input_text = "[Part one--two](docs/part--one.md)\n"
+        expected = "[Part one\u2013two](docs/part--one.md)\n"
+        result = mdformat.text(input_text, extensions={"space_control"})
+        assert result == expected
+
+    def test_wikilink_target_direct(self):
+        """Direct function test: wikilink span is protected."""
+        from mdformat_space_control.plugin import _convert_dash_sequences
+
+        line = "a--b ![[x/y--z.jpg]] c---d"
+        assert _convert_dash_sequences(line) == (
+            "a\u2013b ![[x/y--z.jpg]] c\u2014d"
+        )
+
+
 class TestDashConversionFunction:
     """Direct tests for _convert_dash_sequences function."""
 

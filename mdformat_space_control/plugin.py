@@ -469,7 +469,8 @@ def _convert_dash_sequences(text: str) -> str:
 
     Converts ``---`` to em-dash (U+2014) and ``--`` to en-dash (U+2013).
     Preserves dashes inside fenced code blocks, inline code spans,
-    HTML comments, and HTML tags.
+    HTML comments, HTML tags, URIs, CLI options, wikilinks, and markdown
+    link destinations.
     Skips lines that are only dashes (thematic breaks, frontmatter delimiters).
 
     Em-dash is matched first (longer sequence) to prevent ``---`` from being
@@ -493,6 +494,10 @@ def _convert_dash_sequences(text: str) -> str:
 
     # URI pattern: protect scheme://... tokens from dash conversion
     uri_re = re.compile(r"\w+://\S+")
+
+    # Markdown link/image destination: the "(dest)" that follows "]". Dashes
+    # in a path or id are identifiers, not typography (images/a--b/f.jpg).
+    link_dest_re = re.compile(r"\]\([^)\n]*\)")
 
     # Lines that are only dashes (thematic breaks, frontmatter delimiters),
     # separator lines starting/ending with dashes (e.g., "--- Title ---"),
@@ -546,6 +551,12 @@ def _convert_dash_sequences(text: str) -> str:
 
             # Protect URIs (e.g., gs://bucket--name/path)
             protected = uri_re.sub(_save_placeholder, protected)
+
+            # Protect wikilinks and link destinations: their targets are
+            # paths that must round-trip byte-for-byte
+            # (e.g., ![[images/1ZWaSGfw--M/frame-0000.jpg]])
+            protected = _WIKILINK_SPAN_RE.sub(_save_placeholder, protected)
+            protected = link_dest_re.sub(_save_placeholder, protected)
 
             # Protect CLI option dashes (e.g., --output, ---long-opt)
             protected = cli_option_re.sub(_save_placeholder, protected)

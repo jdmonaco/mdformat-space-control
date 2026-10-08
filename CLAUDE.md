@@ -10,7 +10,7 @@ mdformat-space-control is an mdformat plugin that provides unified control over 
 - **Frontmatter spacing**: Normalizes spacing after YAML frontmatter (works with mdformat-frontmatter)
 - **Consecutive blank line normalization**: Limits runs of 3+ empty lines to a maximum of 2
 - **Trailing whitespace removal**: Strips trailing whitespace outside code blocks
-- **Smart dash conversion**: Converts `--` to en-dash and `---` to em-dash, with protection for HTML comments, tags, code blocks, and inline code spans
+- **Smart dash conversion**: Converts `--` to en-dash and `---` to em-dash, with protection for HTML comments, tags, code blocks, inline code spans, URIs, CLI options, wikilinks, and link destinations
 - **Escaped link repair**: Fixes malformed multi-line links from web-clipped content
 - **Wikilink preservation**: Handles Obsidian-style `[[links]]`, `[[links|aliases]]`, `[[page#heading]]`, `[[page#^blockid]]`, and `![[embeds]]`
 - **Soft break joining**: Joins soft breaks (plain newlines) into single lines in paragraphs, list items, and blockquotes

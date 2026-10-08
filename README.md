@@ -11,7 +11,7 @@ An [mdformat](https://github.com/executablebooks/mdformat) plugin that provides 
 - **Consecutive blank line normalization**: Limits runs of 3+ empty lines to a maximum of 2
 - **Trailing whitespace removal**: Strips trailing whitespace outside code blocks
 - **Escaped link repair**: Fixes malformed multi-line links from web-clipped content
-- **Smart dash conversion**: Converts `--` to en-dash (–) and `---` to em-dash (—), preserving code blocks, inline code, HTML comments, and HTML tags
+- **Smart dash conversion**: Converts `--` to en-dash (–) and `---` to em-dash (—), preserving code blocks, inline code, HTML comments, HTML tags, URIs, CLI options, wikilinks, and link destinations
 - **Wikilink preservation**: Handles Obsidian-style `[[links]]`, `[[links|aliases]]`, `[[page#heading]]`, `[[page#^blockid]]`, and `![[embeds]]`
 - **Soft break joining**: Joins soft breaks (plain newlines within paragraphs) into single lines, normalizing to single-line paragraphs
 
@@ -165,7 +165,7 @@ The result—unexpected as it was—changed everything.
 Pages 10–20 of the report.
 ```
 
-Dashes are preserved inside fenced code blocks, inline code spans, HTML comments, and HTML tags. Thematic breaks (`---`), GFM table separator rows (`| -- | -- |`), and frontmatter delimiters are not affected. Sequences of 4+ dashes are left unchanged.
+Dashes are preserved inside fenced code blocks, inline code spans, HTML comments, HTML tags, URIs (`gs://bucket--name`), CLI options (`--output`), wikilink targets (`![[images/a--b/frame.jpg]]`), and markdown link destinations (`[text](docs/a--b.md)`). Thematic breaks (`---`), GFM table separator rows (`| -- | -- |`), and frontmatter delimiters are not affected. Sequences of 4+ dashes are left unchanged.
 
 These exclusions apply equally inside blockquotes, at any nesting depth: leading `>` markers are stripped before block-level patterns are matched, so tables and code fences in a blockquote or Obsidian callout are preserved just as they are at the top level.
 
